@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 
 	//
 	_ "github.com/lib/pq"
@@ -38,6 +39,16 @@ func (db DataBase) findForum(tx *sql.Tx, queryAdd string, arg string) (foundForu
 	return
 }
 
+func (db DataBase) forumCheckUser(tx *sql.Tx, forum *models.Forum) (err error) {
+	var thatUser models.User
+	if thatUser, err = db.findUserByName(tx, forum.User); err != nil {
+		err = re.ErrorUserNotExist()
+		return
+	}
+	forum.User = thatUser.Nickname
+	return
+}
+
 func (db DataBase) findForumBySlug(tx *sql.Tx, taken string) (foundForum models.Forum, err error) {
 
 	query := `where lower(slug) like lower($1)`
@@ -57,5 +68,6 @@ func (db *DataBase) createForum(tx *sql.Tx, forum *models.Forum) (createdForum m
 	if err = row.Scan(&createdForum.Slug, &createdForum.Title, &createdForum.User); err != nil {
 		return
 	}
+	fmt.Println("i can show slug:", createdForum.Slug)
 	return
 }

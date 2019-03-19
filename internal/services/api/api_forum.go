@@ -23,7 +23,7 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if forum, err = h.DB.CreateForum(&forum); err != nil {
-		if err.Error() == re.ErrorForumUserNotExist().Error() {
+		if err.Error() == re.ErrorUserNotExist().Error() {
 			rw.WriteHeader(http.StatusNotFound)
 			sendErrorJSON(rw, err, place)
 		} else {

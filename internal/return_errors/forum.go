@@ -10,6 +10,6 @@ func ErrorForumSlugIsTaken() error {
 	return errors.New("Slug is taken")
 }
 
-func ErrorForumUserNotExist() error {
-	return errors.New("User not exist")
+func ErrorForumNotExist() error {
+	return errors.New("Forum not exist")
 }

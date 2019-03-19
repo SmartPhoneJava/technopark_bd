@@ -40,7 +40,6 @@ func (h *Handler) getSlug(r *http.Request) (slug string, err error) {
 	return
 }
 
-// bd
 func getUser(r *http.Request) (user models.User, err error) {
 
 	if r.Body == nil {
@@ -56,6 +55,20 @@ func getUser(r *http.Request) (user models.User, err error) {
 }
 
 func getForum(r *http.Request) (user models.Forum, err error) {
+
+	if r.Body == nil {
+		err = re.ErrorNoBody()
+
+		return
+	}
+	defer r.Body.Close()
+
+	_ = json.NewDecoder(r.Body).Decode(&user)
+
+	return
+}
+
+func getThread(r *http.Request) (user models.Thread, err error) {
 
 	if r.Body == nil {
 		err = re.ErrorNoBody()

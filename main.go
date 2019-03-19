@@ -38,8 +38,11 @@ func main() {
 	r.HandleFunc("/api/user/{name}/create", API.CreateUser).Methods("POST")
 	r.HandleFunc("/api/user/{name}/profile", API.GetProfile).Methods("GET")
 	r.HandleFunc("/api/user/{name}/profile", API.UpdateProfile).Methods("POST")
+
 	r.HandleFunc("/api/forum/create", API.CreateForum).Methods("POST")
 	r.HandleFunc("/api/forum/{slug}/details", API.GetForum).Methods("GET")
+
+	r.HandleFunc("/api/forum/{slug}/create", API.CreateThread).Methods("POST")
 
 	if os.Getenv("PORT") == "" {
 		os.Setenv("PORT", conf.Server.Port)

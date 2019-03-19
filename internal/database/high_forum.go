@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 
 	//
 	_ "github.com/lib/pq"
@@ -19,16 +18,12 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	defer tx.Rollback()
 
 	if returnForum, err = db.forumConfirmUnique(tx, forum); err != nil {
-		fmt.Println("sorry")
 		return
 	}
 
-	var thatUser models.User
-	if thatUser, err = db.findUserByName(tx, forum.User); err != nil {
-		err = re.ErrorForumUserNotExist()
+	if err = db.forumCheckUser(tx, forum); err != nil {
 		return
 	}
-	forum.User = thatUser.Nickname
 
 	if returnForum, err = db.createForum(tx, forum); err != nil {
 		return
@@ -38,7 +33,6 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 }
 
 func (db *DataBase) GetForum(slug string) (returnForum models.Forum, err error) {
-
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {
 		return
@@ -46,7 +40,7 @@ func (db *DataBase) GetForum(slug string) (returnForum models.Forum, err error) 
 	defer tx.Rollback()
 
 	if returnForum, err = db.findForumBySlug(tx, slug); err != nil {
-		err = re.ErrorForumUserNotExist()
+		err = re.ErrorUserNotExist()
 		return
 	}
 

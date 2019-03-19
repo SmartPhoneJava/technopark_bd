@@ -78,6 +78,7 @@ func (db *DataBase) CreateTables() error {
     DROP TABLE IF EXISTS Game;
     DROP TABLE IF EXISTS Player;
     DROP TABLE IF EXISTS Photo;
+    DROP TABLE IF EXISTS Thread;
     DROP TABLE IF EXISTS Forum;
     DROP TABLE IF EXISTS UserForum;
 
@@ -92,17 +93,40 @@ func (db *DataBase) CreateTables() error {
     CREATE Table Forum (
         id SERIAL PRIMARY KEY,
         posts int default 0,
-        slug varchar(80) not null,
+        slug varchar(80) not null UNIQUE,
         threads int default 0,
         title varchar(120) not null,
         user_nickname varchar(80) not null
     );
 
     ALTER TABLE Forum
-    ADD CONSTRAINT forum_user
-    FOREIGN KEY (user_nickname)
+        ADD CONSTRAINT forum_user
+        FOREIGN KEY (user_nickname)
+        REFERENCES UserForum(nickname)
+            ON DELETE CASCADE;
+
+    CREATE Table Thread (
+        id SERIAL PRIMARY KEY,
+        author varchar(80) not null,
+        forum varchar(80) not null,
+        message varchar(1600) not null,
+        created    TIMESTAMPTZ,
+        title varchar(80) not null,
+        votes int default 0,
+        slug varchar(80) DEFAULT ''
+    );
+
+    ALTER TABLE Thread
+    ADD CONSTRAINT thread_user
+    FOREIGN KEY (author)
     REFERENCES UserForum(nickname)
-    ON DELETE CASCADE;
+        ON DELETE CASCADE;
+
+    ALTER TABLE Thread
+    ADD CONSTRAINT thread_forum
+    FOREIGN KEY (forum)
+    REFERENCES Forum(slug)
+        ON DELETE CASCADE;
 
 	CREATE TABLE Player (
     id SERIAL PRIMARY KEY,
