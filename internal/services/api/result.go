@@ -8,7 +8,7 @@ import (
 )
 
 func printResult(catched error, number int, place string) {
-	if place != "UpdateProfile" {
+	if place != "CreateForum" {
 		return
 	}
 	if catched != nil {
@@ -37,8 +37,8 @@ func sendSuccessJSON(rw http.ResponseWriter, result interface{}, place string) {
 		}
 	}
 
-	bytes, _ := json.Marshal(result)
-	fmt.Println("result2:" + string(bytes))
+	//bytes, _ := json.Marshal(result)
+	//fmt.Println("result2:" + string(bytes))
 	//rw.Write(bytes)
 	json.NewEncoder(rw).Encode(result)
 }
