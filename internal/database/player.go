@@ -93,7 +93,6 @@ func (db DataBase) ConfirmUnique(tx *sql.Tx, user *models.User) (users *[]models
 	// }
 	foundUsers = nil
 	if foundUsers, err = db.isNicknameUnique(tx, user.Nickname); err != nil || len(*foundUsers) > 0 {
-		fmt.Println("foundUsers:", len(*foundUsers))
 		*users = append(*users, *foundUsers...)
 	}
 	return

@@ -124,6 +124,20 @@ func getUser(r *http.Request) (user models.User, err error) {
 	return
 }
 
+func getForum(r *http.Request) (user models.Forum, err error) {
+
+	if r.Body == nil {
+		err = re.ErrorNoBody()
+
+		return
+	}
+	defer r.Body.Close()
+
+	_ = json.NewDecoder(r.Body).Decode(&user)
+
+	return
+}
+
 // func getUserWithAllFields(r *http.Request) (user models.UserPrivateInfo, err error) {
 
 // 	user, err = getUser(r)

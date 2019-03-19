@@ -52,6 +52,7 @@ func main() {
 	r.HandleFunc("/api/user/{name}/create", API.CreateUser).Methods("POST")
 	r.HandleFunc("/api/user/{name}/profile", API.GetProfile).Methods("GET")
 	r.HandleFunc("/api/user/{name}/profile", API.UpdateProfile).Methods("POST")
+	r.HandleFunc("/api/forum/create", API.CreateForum).Methods("POST")
 
 	// r.HandleFunc("/", mi.CORS(conf.Cors)(API.Ok))
 	// r.HandleFunc("/user", mi.CORS(conf.Cors)(API.GetMyProfile)).Methods("GET")
