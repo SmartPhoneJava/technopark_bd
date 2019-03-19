@@ -22,9 +22,8 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if forum, err = h.DB.CreateForum(&forum); err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		printResult(err, http.StatusBadRequest, place)
-		sendErrorJSON(rw, err, place)
+		rw.WriteHeader(http.StatusConflict)
+		sendSuccessJSON(rw, forum, place)
 		return
 	}
 

@@ -16,9 +16,9 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	}
 	defer tx.Rollback()
 
-	//if returnForum, err = db.forumConfirmUnique(tx, forum); err != nil {
-	//	return
-	//}
+	if returnForum, err = db.forumConfirmUnique(tx, forum); err != nil {
+		return
+	}
 
 	if returnForum, err = db.createForum(tx, forum); err != nil {
 		return

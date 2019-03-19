@@ -11,9 +11,10 @@ import (
 
 func (db DataBase) forumConfirmUnique(tx *sql.Tx, forum *models.Forum) (foundForum models.Forum, err error) {
 
-	if foundForum, err = db.findForumBySlug(tx, forum.Slug); err != nil {
+	if foundForum, err = db.findForumBySlug(tx, forum.Slug); err != nil && err != sql.ErrNoRows {
 		return
 	}
+	err = nil
 
 	if foundForum.Slug != "" {
 		err = re.ErrorForumSlugIsTaken()

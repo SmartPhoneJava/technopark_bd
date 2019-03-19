@@ -94,7 +94,7 @@ func (db *DataBase) CreateTables() error {
         posts int default 0,
         slug varchar(80) not null,
         threads int default 0,
-        title varchar(60) not null,
+        title varchar(120) not null,
         user_nickname varchar(80) not null
     );
 
