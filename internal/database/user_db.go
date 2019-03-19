@@ -94,6 +94,13 @@ func (db DataBase) findUserByName(tx *sql.Tx, taken string) (foundUser models.Us
 	return
 }
 
+func (db DataBase) findUserByEmail(tx *sql.Tx, taken string) (foundUser models.User, err error) {
+
+	query := `where lower(email) like lower($1)`
+	foundUser, err = db.findUser(tx, query, taken)
+	return
+}
+
 func (db DataBase) findUsers(tx *sql.Tx, queryAdd string, taken ...string) (foundUsers *[]models.User, err error) {
 
 	query := `SELECT fullname, nickname, email, about 

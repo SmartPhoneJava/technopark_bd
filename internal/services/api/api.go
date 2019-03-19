@@ -5,7 +5,6 @@ import (
 	"escapade/internal/models"
 	"fmt"
 	"net/http"
-	//"reflect"
 )
 
 // Handler is struct
@@ -157,9 +156,9 @@ func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
 	user.Print()
 
 	if user, err = h.DB.UpdateUser(user); err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusConflict)
 		sendErrorJSON(rw, err, place)
-		printResult(err, http.StatusBadRequest, place)
+		printResult(err, http.StatusConflict, place)
 		return
 	}
 
