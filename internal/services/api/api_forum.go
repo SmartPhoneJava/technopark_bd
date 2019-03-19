@@ -50,7 +50,7 @@ func (h *Handler) GetForum(rw http.ResponseWriter, r *http.Request) {
 
 	rw.Header().Set("Content-Type", "application/json")
 
-	if slug, err = h.getSlug(r); err != nil {
+	if slug, err = getSlug(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)

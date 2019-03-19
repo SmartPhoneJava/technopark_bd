@@ -43,6 +43,7 @@ func main() {
 	r.HandleFunc("/api/forum/{slug}/details", API.GetForum).Methods("GET")
 
 	r.HandleFunc("/api/forum/{slug}/create", API.CreateThread).Methods("POST")
+	r.HandleFunc("/api/forum/{slug}/threads", API.GetThreads).Methods("GET")
 
 	if os.Getenv("PORT") == "" {
 		os.Setenv("PORT", conf.Server.Port)

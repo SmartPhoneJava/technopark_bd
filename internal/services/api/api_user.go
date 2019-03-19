@@ -53,7 +53,7 @@ func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Nickname, err = h.getNickname(r); err != nil {
+	if user.Nickname, err = getNickname(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
@@ -102,7 +102,7 @@ func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
 
 	rw.Header().Set("Content-Type", "application/json")
 
-	if nickname, err = h.getNickname(r); err != nil {
+	if nickname, err = getNickname(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
@@ -147,7 +147,7 @@ func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Nickname, err = h.getNickname(r); err != nil {
+	if user.Nickname, err = getNickname(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
