@@ -26,6 +26,20 @@ func (h *Handler) getNickname(r *http.Request) (nickname string, err error) {
 	return
 }
 
+func (h *Handler) getSlug(r *http.Request) (slug string, err error) {
+	var (
+		vars map[string]string
+	)
+
+	vars = mux.Vars(r)
+
+	if slug = vars["slug"]; slug == "" {
+		err = re.ErrorForumSlugInvalid()
+		return
+	}
+	return
+}
+
 // bd
 func getUser(r *http.Request) (user models.User, err error) {
 

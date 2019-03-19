@@ -32,3 +32,20 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	err = tx.Commit()
 	return
 }
+
+func (db *DataBase) GetForum(slug string) (returnForum models.Forum, err error) {
+
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	if returnForum, err = db.findForumBySlug(tx, slug); err != nil {
+		err = re.ErrorForumUserNotExist()
+		return
+	}
+
+	err = tx.Commit()
+	return
+}

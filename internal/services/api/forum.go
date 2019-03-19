@@ -39,3 +39,33 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	printResult(err, http.StatusCreated, place)
 	return
 }
+
+func (h *Handler) GetForum(rw http.ResponseWriter, r *http.Request) {
+	const place = "GetForum"
+	var (
+		forum models.Forum
+		slug  string
+		err   error
+	)
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	if slug, err = h.getSlug(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if forum, err = h.DB.GetForum(slug); err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	sendSuccessJSON(rw, forum, place)
+	printResult(err, http.StatusOK, place)
+	return
+}
