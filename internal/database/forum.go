@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 
 	//
 	_ "github.com/lib/pq"
@@ -17,6 +18,11 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	defer tx.Rollback()
 
 	if returnForum, err = db.forumConfirmUnique(tx, forum); err != nil {
+		return
+	}
+
+	if _, err = db.findUserByName(tx, forum.User); err != nil {
+		err = re.ErrorForumUserNotExist()
 		return
 	}
 

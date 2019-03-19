@@ -2,6 +2,7 @@ package api
 
 import (
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 	"net/http"
 )
 
@@ -22,8 +23,14 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if forum, err = h.DB.CreateForum(&forum); err != nil {
-		rw.WriteHeader(http.StatusConflict)
-		sendSuccessJSON(rw, forum, place)
+		if err.Error() == re.ErrorForumUserNotExist().Error() {
+			rw.WriteHeader(http.StatusNotFound)
+			sendErrorJSON(rw, err, place)
+		} else {
+			rw.WriteHeader(http.StatusConflict)
+			sendSuccessJSON(rw, forum, place)
+		}
+		printResult(err, http.StatusBadRequest, place)
 		return
 	}
 
