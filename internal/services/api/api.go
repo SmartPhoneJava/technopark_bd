@@ -3,6 +3,7 @@ package api
 import (
 	database "escapade/internal/database"
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 	"fmt"
 	"net/http"
 )
@@ -156,9 +157,14 @@ func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
 	user.Print()
 
 	if user, err = h.DB.UpdateUser(user); err != nil {
-		rw.WriteHeader(http.StatusConflict)
+		if err.Error() == re.ErrorEmailIstaken().Error() {
+			rw.WriteHeader(http.StatusConflict)
+			printResult(err, http.StatusConflict, place)
+		} else {
+			rw.WriteHeader(http.StatusNotFound)
+			printResult(err, http.StatusNotFound, place)
+		}
 		sendErrorJSON(rw, err, place)
-		printResult(err, http.StatusConflict, place)
 		return
 	}
 
