@@ -170,41 +170,44 @@ func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} models.Result "invalid info"
 // @Failure 401 {object} models.Result "need authorization"
 // @Router /user [PUT]
-// func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
-// 	const place = "UpdateProfile"
+func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
+	const place = "UpdateProfile"
 
-// 	var (
-// 		user models.UserPrivateInfo
-// 		err  error
-// 		name string
-// 	)
+	var (
+		user models.User
+		err  error
+	)
 
-// 	if user, err = getUser(r); err != nil {
-// 		rw.WriteHeader(http.StatusBadRequest)
-// 		sendErrorJSON(rw, err, place)
-// 		printResult(err, http.StatusBadRequest, place)
-// 		return
-// 	}
+	rw.Header().Set("Content-Type", "application/json")
 
-// 	if name, err = h.getNameFromCookie(r); err != nil {
-// 		rw.WriteHeader(http.StatusUnauthorized)
-// 		sendErrorJSON(rw, re.ErrorAuthorization(), place)
-// 		printResult(err, http.StatusUnauthorized, place)
-// 		return
-// 	}
+	if user, err = getUser(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
 
-// 	if err = h.DB.UpdatePlayerByName(name, &user); err != nil {
-// 		rw.WriteHeader(http.StatusBadRequest)
-// 		sendErrorJSON(rw, err, place)
-// 		printResult(err, http.StatusBadRequest, place)
-// 		return
-// 	}
+	if user.Nickname, err = h.getNickname(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
 
-// 	rw.WriteHeader(http.StatusOK)
-// 	sendSuccessJSON(rw, nil, place)
-// 	printResult(err, http.StatusOK, place)
-// 	return
-// }
+	user.Print()
+
+	if user, err = h.DB.UpdateProfile(user); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	sendSuccessJSON(rw, user, place)
+	printResult(err, http.StatusOK, place)
+	return
+}
 
 // // Login login
 // // @Summary login

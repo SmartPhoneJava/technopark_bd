@@ -1,12 +1,12 @@
 {
 	"server": {
 		"host": "http://localhost",
-		"port": ":3000"
+		"port": ":3001"
 	},
 	"dataBase": {
 		"driverName": "postgres",
 		"url": "DATABASE_URL",
-		"maxOpenConns": 1,
+		"maxOpenConns": 10,
 		"tables": [
 			"Player",
 			"Session",

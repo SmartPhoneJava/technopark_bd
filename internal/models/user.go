@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type User struct {
 	ID       int    `json:"-" db:"id"`
 	About    string `json:"about" db:"about"`
@@ -18,3 +20,11 @@ type User struct {
 // 	return strings.ToLower(user.Email) == strings.ToLower(another.Email) &&
 // 		strings.ToLower(user.Nickname) == strings.ToLower(another.Nickname)
 // }
+
+func (user *User) Print() {
+	fmt.Println("-------User-------")
+	fmt.Println("--About:", user.About)
+	fmt.Println("--Email:", user.Email)
+	fmt.Println("--Fullname:", user.Fullname)
+	fmt.Println("--Nickname:", user.Nickname)
+}

@@ -249,55 +249,55 @@ func (db *DataBase) createPlayer(tx *sql.Tx, user *models.User) (createdUser mod
 	return
 }
 
-// UpdatePlayerByName gets name of Player from
-// relation Session, cause we know that user has session
-// func (db *DataBase) UpdatePlayerByName(curName string, user *models.UserPrivateInfo) (err error) {
-// 	var (
-// 		curEmail     string
-// 		curPass      string
-// 		sqlStatement string
-// 		oldName      string
-// 	)
+//UpdatePlayerByName gets name of Player from
+//relation Session, cause we know that user has session
+func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.User, err error) {
+	// var (
+	// 	curEmail     string
+	// 	curAbout      string
+	// 	sqlStatement string
+	// 	oldName      string
+	// )
 
-// 	oldName = curName
-// 	if curEmail, curPass, err = db.GetPasswordEmailByName(curName); err != nil {
-// 		return
-// 	}
+	// oldName = curName
+	// if curEmail, curPass, err = db.GetPasswordEmailByName(curName); err != nil {
+	// 	return
+	// }
 
-// 	if user.Email != curEmail && user.Email != "" {
-// 		if !models.ValidateEmail(user.Email) {
-// 			return re.ErrorInvalidEmail()
-// 		}
-// 		if err = db.isEmailUnique(user.Email); err != nil {
-// 			return re.ErrorInvalidEmail()
-// 		}
-// 		curEmail = user.Email
-// 	}
+	// if user.Email != curEmail && user.Email != "" {
+	// 	if !models.ValidateEmail(user.Email) {
+	// 		return re.ErrorInvalidEmail()
+	// 	}
+	// 	if err = db.isEmailUnique(user.Email); err != nil {
+	// 		return re.ErrorInvalidEmail()
+	// 	}
+	// 	curEmail = user.Email
+	// }
 
-// 	if user.Password != curPass && user.Password != "" {
-// 		curPass = user.Password
-// 	}
+	// if user.Password != curPass && user.Password != "" {
+	// 	curPass = user.Password
+	// }
 
-// 	if user.Name != curName && user.Name != "" {
-// 		if !models.ValidateString(user.Name) {
-// 			return re.ErrorInvalidName()
-// 		}
-// 		if err = db.isNameUnique(user.Name); err != nil {
-// 			return re.ErrorInvalidName()
-// 		}
-// 		curName = user.Name
-// 	}
+	// if user.Name != curName && user.Name != "" {
+	// 	if !models.ValidateString(user.Name) {
+	// 		return re.ErrorInvalidName()
+	// 	}
+	// 	if err = db.isNameUnique(user.Name); err != nil {
+	// 		return re.ErrorInvalidName()
+	// 	}
+	// 	curName = user.Name
+	// }
 
-// 	sqlStatement = `
-// 			UPDATE Player
-// 			SET name = $1, email = $2, password = $3
-// 			WHERE name like $4
-// 		`
-// 	_, err = db.Db.Exec(sqlStatement, curName, curEmail, curPass, oldName)
+	query := `	UPDATE UserForum set fullname = $1, email = $2, about = $3
+								where nickname = $4
+								RETURNING id, fullname, nickname, email, about;
+						`
+	row := tx.QueryRow(query, user.Fullname, user.Email, user.About, user.Nickname)
 
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	return
-// }
+	updated = models.User{}
+	if err = row.Scan(&updated.ID, &updated.Fullname, &updated.Nickname,
+		&updated.Email, &updated.About); err != nil {
+		return
+	}
+	return
+}

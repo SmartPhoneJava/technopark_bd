@@ -84,6 +84,20 @@ func (db *DataBase) GetProfile(name string) (foundUser models.User, err error) {
 	return
 }
 
+func (db *DataBase) UpdateProfile(user models.User) (foundUser models.User, err error) {
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	if foundUser, err = db.updateUser(tx, user); err != nil {
+		return
+	}
+	err = tx.Commit()
+	return
+}
+
 // Logout delete session_id row  from session table
 func (db *DataBase) Logout(sessionCode string) (err error) {
 	err = db.deleteSession(sessionCode)
