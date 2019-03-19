@@ -110,9 +110,10 @@ func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if user, err = h.DB.GetUser(nickname); err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
+		return
 	}
 
 	sendSuccessJSON(rw, user, place)
