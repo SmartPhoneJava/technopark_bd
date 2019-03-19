@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type User struct {
 	ID       int    `json:"-" db:"id"`
@@ -20,6 +23,18 @@ type User struct {
 // 	return strings.ToLower(user.Email) == strings.ToLower(another.Email) &&
 // 		strings.ToLower(user.Nickname) == strings.ToLower(another.Nickname)
 // }
+
+func (user *User) FillEmpty(another User) {
+	if strings.Trim(user.Email, " ") == "" {
+		user.Email = another.Email
+	}
+	if strings.Trim(user.Fullname, " ") == "" {
+		user.Fullname = another.Fullname
+	}
+	if strings.Trim(user.About, " ") == "" {
+		user.About = another.About
+	}
+}
 
 func (user *User) Print() {
 	fmt.Println("-------User-------")

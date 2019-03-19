@@ -49,16 +49,24 @@ func (db *DataBase) UpdateUser(user models.User) (foundUser models.User, err err
 	}
 	defer tx.Rollback()
 
-	if foundUser, err = db.findUserByEmail(tx, user.Email); err != nil {
-		if err != sql.ErrNoRows {
+	if user.Email != "" {
+		if foundUser, err = db.findUserByEmail(tx, user.Email); err != nil {
+			if err != sql.ErrNoRows {
+				return
+			}
+		}
+
+		if foundUser.Nickname != "" && foundUser.Nickname != user.Nickname {
+			err = re.ErrorEmailIstaken()
 			return
 		}
 	}
 
-	if foundUser.Nickname != "" && foundUser.Nickname != user.Nickname {
-		err = re.ErrorEmailIstaken()
+	var thisUser models.User
+	if thisUser, err = db.findUserByName(tx, user.Nickname); err != nil {
 		return
 	}
+	user.FillEmpty(thisUser)
 
 	if foundUser, err = db.updateUser(tx, user); err != nil {
 		return
