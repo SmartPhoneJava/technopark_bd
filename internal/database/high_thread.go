@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"time"
 
 	//
@@ -38,7 +39,7 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	return
 }
 
-func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.Time, existTime bool) (returnThreads []models.Thread, err error) {
+func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.Time, existTime bool, desc bool) (returnThreads []models.Thread, err error) {
 
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {
@@ -51,19 +52,11 @@ func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.T
 		return
 	}
 
-	if existLimit && existTime {
-		if returnThreads, err = db.threadsGetWithLimitAndTime(tx, slug, limit, t); err != nil {
-			return
-		}
-	} else if existLimit {
-		if returnThreads, err = db.threadsGetWithLimit(tx, slug, limit); err != nil {
-			return
-		}
-	} else if existTime {
-		if returnThreads, err = db.threadsGetWithTime(tx, slug, t); err != nil {
-			return
-		}
+	fmt.Println("GetThreads got:", t.String())
+	if returnThreads, err = db.threadsGet(tx, slug, limit, existLimit, t, existTime, desc); err != nil {
+		return
 	}
+
 	err = tx.Commit()
 	return
 }

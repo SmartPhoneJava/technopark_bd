@@ -107,13 +107,13 @@ func (db *DataBase) CreateTables() error {
 
     CREATE Table Thread (
         id SERIAL PRIMARY KEY,
-        author varchar(80) not null,
-        forum varchar(80) not null,
+        author varchar(120) not null,
+        forum varchar(120) not null,
         message varchar(1600) not null,
         created    TIMESTAMPTZ,
-        title varchar(80) not null,
+        title varchar(120) not null,
         votes int default 0,
-        slug varchar(80) DEFAULT ''
+        slug varchar(120) DEFAULT ''
     );
 
     ALTER TABLE Thread

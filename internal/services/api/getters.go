@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -77,19 +78,24 @@ func getThreadTime(r *http.Request) (exist bool, t time.Time, err error) {
 		return
 	}
 
-	t, err = time.Parse("2006-01-02T15:04:05.000+03:00", str)
+	if t, err = time.Parse("2006-01-02T15:04:05.000+03:00", str); err != nil {
+		t, err = time.Parse("2006-01-02T15:04:05.000Z", str)
 
+	}
+	if err == nil {
+		fmt.Println("i got:", t.String())
+	}
 	return
 }
 
-func getThreadDesc(r *http.Request) (desc bool, t time.Time, err error) {
+func getThreadDesc(r *http.Request) (desc bool, err error) {
 
 	str := r.FormValue("desc")
 	if str == "" {
 		desc = false
 		return
 	}
-	if str == "desc" {
+	if str == "true" {
 		desc = true
 	}
 	return

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"time"
 
 	//
@@ -75,55 +76,60 @@ func (db *DataBase) threadsGetWithLimit(tx *sql.Tx, slug string, limit int) (fou
 	return
 }
 
-func (db *DataBase) threadsGetWithLimitAndTime(tx *sql.Tx, slug string, limit int, t time.Time) (foundThreads []models.Thread, err error) {
+func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundThreads []models.Thread, err error) {
 
+	fmt.Println("threadsGet got:", t.String())
 	query := `select id, slug, author, created, forum, message, title from
-							Thread where forum like $1 and created like $2 Limit $3;
-						 `
+							Thread where lower(forum) like lower($1)`
+
+	if tb {
+		if desc {
+			query += ` and created <= $2`
+			query += ` order by created desc`
+		} else {
+			query += ` and created >= $2`
+			query += ` order by created`
+		}
+		if lb {
+			query += ` Limit $3`
+		}
+	} else if lb {
+		if desc {
+			query += ` order by created desc`
+		} else {
+			query += ` order by created`
+		}
+		query += ` Limit $2`
+	}
 
 	var rows *sql.Rows
 
-	if rows, err = tx.Query(query, slug, t, limit); err != nil {
+	if tb {
+		if lb {
+			rows, err = tx.Query(query, slug, t, limit)
+		} else {
+			rows, err = tx.Query(query, slug, t)
+		}
+	} else if lb {
+		rows, err = tx.Query(query, slug, limit)
+	} else {
+		rows, err = tx.Query(query, slug)
+	}
+
+	if err != nil {
 		return
 	}
 	defer rows.Close()
 
 	foundThreads = []models.Thread{}
 	for rows.Next() {
+
 		thread := models.Thread{}
 		if err = rows.Scan(&thread.ID, &thread.Slug,
 			&thread.Author, &thread.Created, &thread.Forum,
 			&thread.Message, &thread.Title); err != nil {
 			break
 		}
-
-		foundThreads = append(foundThreads, thread)
-	}
-	return
-}
-
-func (db *DataBase) threadsGetWithTime(tx *sql.Tx, slug string, t time.Time) (foundThreads []models.Thread, err error) {
-
-	query := `select id, slug, author, created, forum, message, title from
-							Thread where forum like $1 and created like $2 ;
-						 `
-
-	var rows *sql.Rows
-
-	if rows, err = tx.Query(query, slug, t); err != nil {
-		return
-	}
-	defer rows.Close()
-
-	foundThreads = []models.Thread{}
-	for rows.Next() {
-		thread := models.Thread{}
-		if err = rows.Scan(&thread.ID, &thread.Slug,
-			&thread.Author, &thread.Created, &thread.Forum,
-			&thread.Message, &thread.Title); err != nil {
-			break
-		}
-
 		foundThreads = append(foundThreads, thread)
 	}
 	return

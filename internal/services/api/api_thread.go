@@ -43,13 +43,14 @@ func (h *Handler) CreateThread(rw http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetThreads"
 	var (
-		threads     []models.Thread
-		slug        string
-		limit       int
-		t           time.Time
-		err         error
-		exist_limit bool
-		exist_time  bool
+		threads    []models.Thread
+		slug       string
+		limit      int
+		t          time.Time
+		err        error
+		existLimit bool
+		existTime  bool
+		desc       bool
 	)
 
 	rw.Header().Set("Content-Type", "application/json")
@@ -61,21 +62,28 @@ func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if exist_limit, limit, err = getThreadLimit(r); err != nil {
+	if existLimit, limit, err = getThreadLimit(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}
 
-	if exist_time, t, err = getThreadTime(r); err != nil {
+	if existTime, t, err = getThreadTime(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}
 
-	if threads, err = h.DB.GetThreads(slug, limit, exist_limit, t, exist_time); err != nil {
+	if desc, err = getThreadDesc(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if threads, err = h.DB.GetThreads(slug, limit, existLimit, t, existTime, desc); err != nil {
 		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
