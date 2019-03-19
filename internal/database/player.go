@@ -99,6 +99,28 @@ func (db DataBase) ConfirmUnique(tx *sql.Tx, user *models.User) (users *[]models
 	return
 }
 
+func (db DataBase) findUser(tx *sql.Tx, queryAdd string, arg string) (foundUser models.User, err error) {
+
+	query := `SELECT fullname, nickname, email, about 
+	FROM UserForum ` + queryAdd
+
+	row := tx.QueryRow(query, arg)
+
+	foundUser = models.User{}
+	if err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
+		&foundUser.Email, &foundUser.About); err != nil {
+		return
+	}
+	return
+}
+
+func (db DataBase) findUserByName(tx *sql.Tx, taken string) (foundUser models.User, err error) {
+
+	query := `where nickname like $1`
+	foundUser, err = db.findUser(tx, query, taken)
+	return
+}
+
 func (db DataBase) findUsers(tx *sql.Tx, queryAdd string, taken ...string) (foundUsers *[]models.User, err error) {
 
 	query := `SELECT fullname, nickname, email, about 

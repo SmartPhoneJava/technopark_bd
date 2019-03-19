@@ -10,10 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-
 	//"reflect"
-
-	"github.com/gorilla/mux"
 )
 
 // Handler is struct
@@ -45,32 +42,33 @@ func (h *Handler) Ok(rw http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} models.Result "Required authorization"
 // @Failure 500 {object} models.Result "server error"
 // @Router /user [GET]
-func (h *Handler) GetMyProfile(rw http.ResponseWriter, r *http.Request) {
 
-	const place = "GetMyProfile"
-	var (
-		err      error
-		username string
-	)
+// func (h *Handler) GetMyProfile(rw http.ResponseWriter, r *http.Request) {
 
-	if username, err = h.getNameFromCookie(r); err != nil {
-		rw.WriteHeader(http.StatusUnauthorized)
-		sendErrorJSON(rw, re.ErrorAuthorization(), place)
-		printResult(err, http.StatusUnauthorized, place)
-		return
-	}
+// 	const place = "GetMyProfile"
+// 	var (
+// 		err      error
+// 		username string
+// 	)
 
-	if err = sendPublicUser(h, rw, username, place); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		sendErrorJSON(rw, re.ErrorServer(), place)
-		printResult(err, http.StatusUnauthorized, place)
-		return
-	}
+// 	if username, err = h.getNameFromCookie(r); err != nil {
+// 		rw.WriteHeader(http.StatusUnauthorized)
+// 		sendErrorJSON(rw, re.ErrorAuthorization(), place)
+// 		printResult(err, http.StatusUnauthorized, place)
+// 		return
+// 	}
 
-	rw.WriteHeader(http.StatusOK)
-	printResult(err, http.StatusOK, place)
-	return
-}
+// 	if err = sendPublicUser(h, rw, username, place); err != nil {
+// 		rw.WriteHeader(http.StatusInternalServerError)
+// 		sendErrorJSON(rw, re.ErrorServer(), place)
+// 		printResult(err, http.StatusUnauthorized, place)
+// 		return
+// 	}
+
+// 	rw.WriteHeader(http.StatusOK)
+// 	printResult(err, http.StatusOK, place)
+// 	return
+// }
 
 // CreateUser create new user
 // @Summary create new user
@@ -82,12 +80,11 @@ func (h *Handler) GetMyProfile(rw http.ResponseWriter, r *http.Request) {
 func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	const place = "CreateUser"
 	var (
-		user models.User
-		err  error
-		//sessionID string
+		user  models.User
+		err   error
+		users *[]models.User
 	)
 
-	//r.Header.
 	rw.Header().Set("Content-Type", "application/json")
 
 	if user, err = getUser(r); err != nil {
@@ -104,25 +101,12 @@ func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*
-		var users *[]models.User
-
-		if users, err = h.DB.ConfirmUnique(&user); err != nil || len(*users) > 0 {
-			rw.WriteHeader(http.StatusConflict)
-			printResult(err, http.StatusConflict, place)
-			sendSuccessJSON(rw, users, place)
-			fmt.Println("err catched")
-			return
-		}
-	*/
-	var users *[]models.User
 	users, user, err = h.DB.Register(&user)
 
 	if len(*users) > 0 {
 		rw.WriteHeader(http.StatusConflict)
 		printResult(err, http.StatusConflict, place)
 		sendSuccessJSON(rw, users, place)
-		fmt.Println("err catched")
 		return
 	}
 
@@ -133,11 +117,48 @@ func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//misc.CreateAndSet(rw, sessionID)
 	rw.WriteHeader(http.StatusCreated)
 	sendSuccessJSON(rw, user, place)
-
 	printResult(err, http.StatusCreated, place)
+	return
+}
+
+// GetProfile returns model UserPublicInfo
+// @Summary Get some of user fields
+// @Description return public information, such as name or best_score
+// @ID GetProfile
+// @Param name path string false "User name"
+// @Success 200 {object} models.UserPublicInfo "Profile found successfully"
+// @Failure 400 {object} models.Result "Invalid username"
+// @Failure 404 {object} models.Result "User not found"
+// @Router /users/{name}/profile [GET]
+func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
+	const place = "GetProfile"
+
+	var (
+		err      error
+		nickname string
+		user     models.User
+	)
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	if nickname, err = h.getNickname(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if user, err = h.DB.GetProfile(nickname); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+	}
+
+	sendSuccessJSON(rw, user, place)
+	rw.WriteHeader(http.StatusOK)
+	printResult(err, http.StatusOK, place)
 	return
 }
 
@@ -518,44 +539,4 @@ func (h *Handler) PostImage(rw http.ResponseWriter, r *http.Request) {
 
 	sendSuccessJSON(rw, nil, place)
 	rw.WriteHeader(http.StatusCreated)
-}
-
-// GetProfile returns model UserPublicInfo
-// @Summary Get some of user fields
-// @Description return public information, such as name or best_score
-// @ID GetProfile
-// @Param name path string false "User name"
-// @Success 200 {object} models.UserPublicInfo "Profile found successfully"
-// @Failure 400 {object} models.Result "Invalid username"
-// @Failure 404 {object} models.Result "User not found"
-// @Router /users/{name}/profile [GET]
-func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
-	const place = "GetProfile"
-
-	var (
-		err      error
-		username string
-	)
-
-	vars := mux.Vars(r)
-	username = vars["name"]
-
-	if username == "" {
-		err = re.ErrorInvalidName()
-		rw.WriteHeader(http.StatusBadGateway)
-		sendErrorJSON(rw, err, place)
-		printResult(err, http.StatusBadGateway, place)
-		return
-	}
-
-	if err = sendPublicUser(h, rw, username, place); err != nil {
-		rw.WriteHeader(http.StatusNotFound)
-		sendErrorJSON(rw, re.ErrorUserNotFound(), place)
-		printResult(err, http.StatusNotFound, place)
-		return
-	}
-
-	rw.WriteHeader(http.StatusOK)
-	printResult(err, http.StatusOK, place)
-	return
 }

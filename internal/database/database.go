@@ -59,29 +59,28 @@ func (db *DataBase) Register(user *models.User) (foundUsers *[]models.User, crea
 	}
 	defer tx.Rollback()
 
-	// if err = ValidatePrivateUI(user); err != nil {
-	// 	fmt.Println("database/register - fail validation")
-	// 	return
-	// }
-
 	if foundUsers, err = db.ConfirmUnique(tx, user); err != nil || len(*foundUsers) > 0 {
 		return
 	}
 
-	//var userID int
 	if createdUser, err = db.createPlayer(tx, user); err != nil {
 		return
 	}
-
-	// if str, err = db.createSession(userID); err != nil {
-	// 	fmt.Println("database/register - fail creating Session")
-	// 	return
-	// }
-
 	err = tx.Commit()
+	return
+}
 
-	fmt.Println("database/register +")
+func (db *DataBase) GetProfile(name string) (foundUser models.User, err error) {
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
 
+	if foundUser, err = db.findUserByName(tx, name); err != nil {
+		return
+	}
+	err = tx.Commit()
 	return
 }
 
@@ -214,28 +213,6 @@ func (db *DataBase) GetUsers(page int) (players []models.UserPublicInfo, err err
 	}
 
 	fmt.Println("database/GetUsers +")
-
-	return
-}
-
-func (db *DataBase) GetProfile(name string) (user models.UserPublicInfo, err error) {
-
-	sqlStatement := `
-	SELECT email, best_score, best_time 
-	FROM Player 
-	WHERE name like $1 
-`
-
-	row := db.Db.QueryRow(sqlStatement, name)
-
-	user.Name = name
-
-	if err = row.Scan(&user.Email, &user.BestScore, &user.BestTime); err != nil {
-		fmt.Println("database/GetProfile failed")
-		return
-	}
-
-	fmt.Println("database/GetProfile +")
 
 	return
 }
