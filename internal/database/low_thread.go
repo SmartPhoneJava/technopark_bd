@@ -199,13 +199,13 @@ func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread mod
 	)
 	query := `SELECT id, slug, author, created, forum, message, title from Thread`
 	if id, err = strconv.Atoi(arg); err != nil {
-		query += ` where slug like $1`
-		//fmt.Println("wee sont eat ", arg)
+		query += ` where lower(slug) like lower($1)`
+		fmt.Println("wee sont eat ", arg)
 		row = tx.QueryRow(query, arg)
 		err = nil
 	} else {
 		query += ` where id = $1`
-		//fmt.Println("wee see it ", id)
+		fmt.Println("wee see it ", id)
 		row = tx.QueryRow(query, id)
 	}
 

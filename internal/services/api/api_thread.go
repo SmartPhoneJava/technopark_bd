@@ -42,6 +42,37 @@ func (h *Handler) CreateThread(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (h *Handler) GetThreadDetails(rw http.ResponseWriter, r *http.Request) {
+	const place = "CreateThread"
+	var (
+		thread models.Thread
+		slug   string
+		err    error
+	)
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	if slug, err = getSlug(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if thread, err = h.DB.GetThread(slug); err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+		sendErrorJSON(rw, err, place)
+
+		printResult(err, http.StatusNotFound, place)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	sendSuccessJSON(rw, thread, place)
+	printResult(err, http.StatusOK, place)
+	return
+}
+
 func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetThreads"
 	var (

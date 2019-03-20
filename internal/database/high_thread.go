@@ -58,3 +58,19 @@ func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.T
 	err = tx.Commit()
 	return
 }
+
+func (db *DataBase) GetThread(slug string) (returnThread models.Thread, err error) {
+
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	if returnThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
+		return
+	}
+
+	err = tx.Commit()
+	return
+}
