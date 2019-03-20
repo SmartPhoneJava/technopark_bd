@@ -3,6 +3,7 @@ package api
 import (
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -64,6 +65,7 @@ func (h *Handler) GetThreadDetails(rw http.ResponseWriter, r *http.Request) {
 		sendErrorJSON(rw, err, place)
 
 		printResult(err, http.StatusNotFound, place)
+		fmt.Println("GetThread GetThread GetThread err ")
 		return
 	}
 
@@ -95,26 +97,21 @@ func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if existLimit, limit, err = getThreadLimit(r); err != nil {
+	if existLimit, limit, err = getLimit(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}
 
-	if existTime, t, err = getThreadTime(r); err != nil {
+	if existTime, t, err = getTime(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}
 
-	if desc, err = getThreadDesc(r); err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		sendErrorJSON(rw, err, place)
-		printResult(err, http.StatusBadRequest, place)
-		return
-	}
+	desc = getDesc(r)
 
 	if threads, err = h.DB.GetThreads(slug, limit, existLimit, t, existTime, desc); err != nil {
 		//if err.Error() == re.ErrorForumUserNotExist().Error() {

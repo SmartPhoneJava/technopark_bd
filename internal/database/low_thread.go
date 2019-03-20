@@ -26,6 +26,7 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 	if err = row.Scan(&createdThread.ID, &createdThread.Slug,
 		&createdThread.Author, &createdThread.Created, &createdThread.Forum,
 		&createdThread.Message, &createdThread.Title); err != nil {
+		fmt.Println("here we go")
 		return
 	}
 	return
@@ -61,7 +62,6 @@ func (db *DataBase) threadsGetWithLimit(tx *sql.Tx, slug string, limit int) (fou
 
 func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundThreads []models.Thread, err error) {
 
-	fmt.Println("threadsGet got:", t.String())
 	query := `select id, slug, author, created, forum, message, title from
 							Thread where lower(forum) like lower($1)`
 

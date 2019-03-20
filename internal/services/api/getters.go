@@ -56,7 +56,7 @@ func getUser(r *http.Request) (user models.User, err error) {
 	return
 }
 
-func getThreadLimit(r *http.Request) (exist bool, limit int, err error) {
+func getLimit(r *http.Request) (exist bool, limit int, err error) {
 	exist = true
 	str := r.FormValue("limit")
 	if str == "" {
@@ -68,7 +68,7 @@ func getThreadLimit(r *http.Request) (exist bool, limit int, err error) {
 	return
 }
 
-func getThreadTime(r *http.Request) (exist bool, t time.Time, err error) {
+func getTime(r *http.Request) (exist bool, t time.Time, err error) {
 
 	exist = true
 	str := r.FormValue("since")
@@ -87,7 +87,7 @@ func getThreadTime(r *http.Request) (exist bool, t time.Time, err error) {
 	return
 }
 
-func getThreadDesc(r *http.Request) (desc bool, err error) {
+func getDesc(r *http.Request) (desc bool) {
 
 	str := r.FormValue("desc")
 	if str == "" {
@@ -98,6 +98,11 @@ func getThreadDesc(r *http.Request) (desc bool, err error) {
 		desc = true
 	}
 	return
+}
+
+func getSort(r *http.Request) string {
+
+	return r.FormValue("sort")
 }
 
 func getForum(r *http.Request) (user models.Forum, err error) {

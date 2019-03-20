@@ -11,4 +11,5 @@ type Post struct {
 	Message  string    `json:"message" db:"message"`
 	Parent   int       `json:"parent" db:"parent"`
 	Thread   int       `json:"thread" db:"thread"`
+	Path     string    `json:"-" db:"path"`
 }

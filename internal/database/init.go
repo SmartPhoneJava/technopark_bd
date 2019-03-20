@@ -108,7 +108,7 @@ func (db *DataBase) CreateTables() error {
         id SERIAL PRIMARY KEY,
         author varchar(120) not null,
         forum varchar(120) not null,
-        message varchar(1600) not null,
+        message varchar(2100) not null,
         created    TIMESTAMPTZ,
         title varchar(120) not null,
         votes int default 0,
@@ -134,8 +134,9 @@ func (db *DataBase) CreateTables() error {
         message varchar(1600) not null,
         created    TIMESTAMPTZ,
         isEdited boolean default false,
-        thread int ,
-        parent int
+        thread int,
+        parent int,
+        path varchar(1000)
     );
 
     ALTER TABLE Post
@@ -175,7 +176,7 @@ func (db *DataBase) CreateTables() error {
     FOREIGN KEY (thread)
     REFERENCES Thread(id)
         ON DELETE CASCADE;
-        
+
 	`
 	_, err := db.Db.Exec(sqlStatement)
 
