@@ -115,7 +115,7 @@ func (db *DataBase) CreateTables() error {
         created    TIMESTAMPTZ,
         title varchar(120) not null,
         votes int default 0,
-        slug varchar(120) DEFAULT ''
+        slug varchar(120) default null
     );
 
     ALTER TABLE Thread

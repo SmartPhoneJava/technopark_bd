@@ -2,6 +2,7 @@ package api
 
 import (
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 	"net/http"
 	"time"
 )
@@ -23,13 +24,14 @@ func (h *Handler) CreateThread(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if thread, err = h.DB.CreateThread(&thread); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
-		rw.WriteHeader(http.StatusNotFound)
-		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
+		if err.Error() == re.ErrorThreadConflict().Error() {
+			rw.WriteHeader(http.StatusConflict)
+			sendSuccessJSON(rw, thread, place)
+		} else {
+			rw.WriteHeader(http.StatusNotFound)
+			sendErrorJSON(rw, err, place)
+
+		}
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}

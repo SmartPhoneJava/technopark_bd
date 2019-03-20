@@ -20,9 +20,12 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	}
 	defer tx.Rollback()
 
-	// if returnForum, err = db.threadConfirmUnique(tx, forum); err != nil {
-	// 	return
-	// }
+	if returnThread, err = db.threadConfirmUnique(tx, thread); err != nil {
+		fmt.Println("threadConfirmUnique work")
+		return
+	} else {
+		fmt.Println("thread_no errpor")
+	}
 
 	if thread.Author, err = db.userCheckID(tx, thread.Author); err != nil {
 		return

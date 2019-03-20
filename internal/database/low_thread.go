@@ -118,6 +118,53 @@ func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t ti
 	return
 }
 
+func (db DataBase) threadConfirmUnique(tx *sql.Tx, thread *models.Thread) (foundThread models.Thread, err error) {
+	// if foundThread, err = db.threadFindByTitle(tx, thread.Title); err != sql.ErrNoRows {
+	// 	err = re.ErrorThreadConflict()
+	// 	return
+	// }
+	if thread.Slug != "" {
+		if foundThread, err = db.threadFindBySlug(tx, thread.Slug); err != sql.ErrNoRows {
+			err = re.ErrorThreadConflict()
+			return
+		}
+	}
+	err = nil
+	return
+}
+
+func (db DataBase) threadFindByTitle(tx *sql.Tx, title string) (foundThread models.Thread, err error) {
+
+	query := `SELECT id, slug, author, created, forum, message, title from
+	Thread where title like $1`
+
+	row := tx.QueryRow(query, title)
+
+	foundThread = models.Thread{}
+	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title); err != nil {
+		return
+	}
+	return
+}
+
+func (db DataBase) threadFindBySlug(tx *sql.Tx, slug string) (foundThread models.Thread, err error) {
+
+	query := `SELECT id, slug, author, created, forum, message, title from
+	Thread where lower(slug) like lower($1)`
+
+	row := tx.QueryRow(query, slug)
+
+	foundThread = models.Thread{}
+	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title); err != nil {
+		return
+	}
+	return
+}
+
 func (db DataBase) threadFindByID(tx *sql.Tx, arg int) (foundThread models.Thread, err error) {
 
 	query := `SELECT id, slug, author, created, forum, message, title from
