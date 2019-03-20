@@ -3,13 +3,14 @@ package database
 import (
 	"database/sql"
 	"escapade/internal/models"
+	"fmt"
 
 	//
 	_ "github.com/lib/pq"
 )
 
 // CreateThread handle thread creation
-func (db *DataBase) CreatePost(posts []models.Post) (createdPosts []models.Post, err error) {
+func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts []models.Post, err error) {
 
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {
@@ -18,6 +19,16 @@ func (db *DataBase) CreatePost(posts []models.Post) (createdPosts []models.Post,
 	defer tx.Rollback()
 
 	createdPosts = []models.Post{}
+
+	var thatThread models.Thread
+
+	if thatThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
+		fmt.Println("forum noooooooooo exists:")
+		return
+	}
+
+	fmt.Println("forum exists:", thatThread.ID, thatThread.Slug)
+
 	for _, post := range posts {
 		// if returnForum, err = db.postConfirmUnique(tx, forum); err != nil {
 		// 	return
@@ -27,15 +38,7 @@ func (db *DataBase) CreatePost(posts []models.Post) (createdPosts []models.Post,
 			return
 		}
 
-		if post.Forum, err = db.forumCheckID(tx, post.Forum); err != nil {
-			return
-		}
-
-		if post.Thread, err = db.threadCheckID(tx, post.Thread); err != nil {
-			return
-		}
-
-		if post, err = db.postCreate(tx, post); err != nil {
+		if post, err = db.postCreate(tx, post, thatThread); err != nil {
 			return
 		}
 

@@ -156,7 +156,7 @@ func (db *DataBase) CreateTables() error {
     ALTER TABLE Post
     ADD CONSTRAINT post_thread
     FOREIGN KEY (thread)
-    REFERENCES Forum(id)
+    REFERENCES Thread(id)
         ON DELETE CASCADE;
 
 	CREATE TABLE Player (

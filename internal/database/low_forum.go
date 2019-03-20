@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 
 	//
 	_ "github.com/lib/pq"
@@ -22,7 +21,6 @@ func (db *DataBase) createForum(tx *sql.Tx, forum *models.Forum) (createdForum m
 	if err = row.Scan(&createdForum.Slug, &createdForum.Title, &createdForum.User); err != nil {
 		return
 	}
-	fmt.Println("i can show slug:", createdForum.Slug)
 	return
 }
 

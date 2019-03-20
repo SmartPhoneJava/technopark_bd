@@ -5,6 +5,7 @@ import (
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	//
@@ -29,24 +30,6 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 	}
 	return
 }
-
-/*
-SELECT 	a.FieldWidth, a.FieldHeight,
-					a.MinsTotal, a.MinsFound,
-					a.Finished, a.Exploded
-	 FROM Player as p
-		JOIN
-			(
-				SELECT player_id,
-					FieldWidth, FieldHeight,
-					MinsTotal, MinsFound,
-					Finished, Exploded
-					FROM Game Order by id
-			) as a
-			ON p.id = a.player_id and p.name like $1
-			OFFSET $2 Limit $3
-
-*/
 
 // getThreads get threads
 func (db *DataBase) threadsGetWithLimit(tx *sql.Tx, slug string, limit int) (foundThreads []models.Thread, err error) {
@@ -158,5 +141,33 @@ func (db *DataBase) threadCheckID(tx *sql.Tx, oldID int) (newID int, err error) 
 		return
 	}
 	newID = thatThread.ID
+	return
+}
+
+func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread models.Thread, err error) {
+
+	var (
+		id  int
+		row *sql.Row
+	)
+	query := `SELECT id, slug, author, created, forum, message, title from Thread`
+	if id, err = strconv.Atoi(arg); err != nil {
+		query += ` where slug like $1`
+		//fmt.Println("wee sont eat ", arg)
+		row = tx.QueryRow(query, arg)
+		err = nil
+	} else {
+		query += ` where id = $1`
+		//fmt.Println("wee see it ", id)
+		row = tx.QueryRow(query, id)
+	}
+
+	foundThread = models.Thread{}
+	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title); err != nil {
+		//err = re.ErrorThreadNotExist()
+		return
+	}
 	return
 }

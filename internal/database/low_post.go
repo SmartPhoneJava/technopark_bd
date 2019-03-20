@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 
+	"time"
 	//
 	_ "github.com/lib/pq"
 )
@@ -20,14 +21,14 @@ id SERIAL PRIMARY KEY,
 */
 
 // postCreate create post
-func (db *DataBase) postCreate(tx *sql.Tx, post models.Post) (createdPost models.Post, err error) {
+func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Thread) (createdPost models.Post, err error) {
 
 	query := `INSERT INTO Post(author, created, forum, message, thread) VALUES
 						 	($1, $2, $3, $4, $5) 
 						 RETURNING id, author, created, forum, message, thread;
 						 `
-	row := tx.QueryRow(query, post.Author, post.Created,
-		post.Forum, post.Message, post.Thread)
+	row := tx.QueryRow(query, post.Author, time.Now(),
+		thread.Forum, post.Message, thread.ID)
 
 	createdPost = models.Post{}
 	if err = row.Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
