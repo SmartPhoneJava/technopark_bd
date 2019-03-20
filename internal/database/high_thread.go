@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"time"
 
 	//
@@ -21,10 +20,7 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	defer tx.Rollback()
 
 	if returnThread, err = db.threadConfirmUnique(tx, thread); err != nil {
-		fmt.Println("threadConfirmUnique work")
 		return
-	} else {
-		fmt.Println("thread_no errpor")
 	}
 
 	if thread.Author, err = db.userCheckID(tx, thread.Author); err != nil {
@@ -55,7 +51,6 @@ func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.T
 		return
 	}
 
-	fmt.Println("GetThreads got:", t.String())
 	if returnThreads, err = db.threadsGet(tx, slug, limit, existLimit, t, existTime, desc); err != nil {
 		return
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func printResult(catched error, number int, place string) {
-	if place != "CreateForum" {
+	if place != " " {
 		return
 	}
 	if catched != nil {

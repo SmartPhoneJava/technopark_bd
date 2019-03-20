@@ -10,5 +10,5 @@ type Thread struct {
 	Message string    `json:"message" db:"message"`
 	Slug    string    `json:"slug" db:"slug"`
 	Title   string    `json:"title" db:"title"`
-	Votes   int       `json:"-" db:"votes"`
+	Votes   int       `json:"votes" db:"votes"`
 }
