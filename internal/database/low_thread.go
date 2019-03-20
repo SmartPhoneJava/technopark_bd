@@ -135,24 +135,28 @@ func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t ti
 	return
 }
 
-// checkUser checks, is thread's author exists
-func (db *DataBase) threadCheckUser(tx *sql.Tx, thread *models.Thread) (err error) {
-	var thatUser models.User
-	if thatUser, err = db.findUserByName(tx, thread.Author); err != nil {
-		err = re.ErrorUserNotExist()
+func (db DataBase) threadFindByID(tx *sql.Tx, arg int) (foundThread models.Thread, err error) {
+
+	query := `SELECT id, slug, author, created, forum, message, title from
+	Thread where id like $1`
+
+	row := tx.QueryRow(query, arg)
+
+	foundThread = models.Thread{}
+	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title); err != nil {
 		return
 	}
-	thread.Author = thatUser.Nickname
 	return
 }
 
-// threadCheckForum checks, is thread's forum exists
-func (db *DataBase) threadCheckForum(tx *sql.Tx, thread *models.Thread) (err error) {
-	var thatForum models.Forum
-	if thatForum, err = db.findForumBySlug(tx, thread.Forum); err != nil {
-		err = re.ErrorForumNotExist()
+func (db *DataBase) threadCheckID(tx *sql.Tx, oldID int) (newID int, err error) {
+	var thatThread models.Thread
+	if thatThread, err = db.threadFindByID(tx, oldID); err != nil {
+		err = re.ErrorThreadNotExist()
 		return
 	}
-	thread.Forum = thatForum.Slug
+	newID = thatThread.ID
 	return
 }

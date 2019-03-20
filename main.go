@@ -10,14 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// ./swag init
-
-// @title Escapade API
-// @version 1.0
-// @description Documentation
-
-// @host https://escapade-backend.herokuapp.com
-// @BasePath /api/v1
 func main() {
 	const confPath = "conf.json"
 
@@ -44,6 +36,8 @@ func main() {
 
 	r.HandleFunc("/api/forum/{slug}/create", API.CreateThread).Methods("POST")
 	r.HandleFunc("/api/forum/{slug}/threads", API.GetThreads).Methods("GET")
+
+	r.HandleFunc("/api/thread/{slug}/create", API.CreatePosts).Methods("POST")
 
 	if os.Getenv("PORT") == "" {
 		os.Setenv("PORT", conf.Server.Port)

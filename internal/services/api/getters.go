@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// bd
 func getNickname(r *http.Request) (nickname string, err error) {
 	var (
 		vars map[string]string
@@ -105,7 +104,18 @@ func getForum(r *http.Request) (user models.Forum, err error) {
 
 	if r.Body == nil {
 		err = re.ErrorNoBody()
+		return
+	}
+	defer r.Body.Close()
 
+	_ = json.NewDecoder(r.Body).Decode(&user)
+	return
+}
+
+func getThread(r *http.Request) (user models.Thread, err error) {
+
+	if r.Body == nil {
+		err = re.ErrorNoBody()
 		return
 	}
 	defer r.Body.Close()
@@ -115,16 +125,15 @@ func getForum(r *http.Request) (user models.Forum, err error) {
 	return
 }
 
-func getThread(r *http.Request) (user models.Thread, err error) {
+func getPosts(r *http.Request) (posts []models.Post, err error) {
 
 	if r.Body == nil {
 		err = re.ErrorNoBody()
-
 		return
 	}
 	defer r.Body.Close()
 
-	_ = json.NewDecoder(r.Body).Decode(&user)
+	_ = json.NewDecoder(r.Body).Decode(&posts)
 
 	return
 }

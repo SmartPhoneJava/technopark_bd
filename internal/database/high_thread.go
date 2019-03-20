@@ -24,11 +24,11 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	// 	return
 	// }
 
-	if err = db.threadCheckUser(tx, thread); err != nil {
+	if thread.Author, err = db.userCheckID(tx, thread.Author); err != nil {
 		return
 	}
 
-	if err = db.threadCheckForum(tx, thread); err != nil {
+	if thread.Forum, err = db.forumCheckID(tx, thread.Forum); err != nil {
 		return
 	}
 

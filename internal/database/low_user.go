@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 
 	//
 	_ "github.com/lib/pq"
@@ -37,6 +38,16 @@ func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.Use
 		&updated.Email, &updated.About); err != nil {
 		return
 	}
+	return
+}
+
+func (db *DataBase) userCheckID(tx *sql.Tx, oldNickname string) (newNickname string, err error) {
+	var thatUser models.User
+	if thatUser, err = db.findUserByName(tx, oldNickname); err != nil {
+		err = re.ErrorUserNotExist()
+		return
+	}
+	newNickname = thatUser.Nickname
 	return
 }
 

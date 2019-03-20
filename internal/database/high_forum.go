@@ -21,7 +21,7 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 		return
 	}
 
-	if err = db.forumCheckUser(tx, forum); err != nil {
+	if forum.User, err = db.userCheckID(tx, forum.User); err != nil {
 		return
 	}
 
