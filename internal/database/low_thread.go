@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -26,7 +25,6 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 	if err = row.Scan(&createdThread.ID, &createdThread.Slug,
 		&createdThread.Author, &createdThread.Created, &createdThread.Forum,
 		&createdThread.Message, &createdThread.Title); err != nil {
-		fmt.Println("here we go")
 		return
 	}
 	return
@@ -200,12 +198,10 @@ func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread mod
 	query := `SELECT id, slug, author, created, forum, message, title from Thread`
 	if id, err = strconv.Atoi(arg); err != nil {
 		query += ` where lower(slug) like lower($1)`
-		fmt.Println("wee sont eat ", arg)
 		row = tx.QueryRow(query, arg)
 		err = nil
 	} else {
 		query += ` where id = $1`
-		fmt.Println("wee see it ", id)
 		row = tx.QueryRow(query, id)
 	}
 

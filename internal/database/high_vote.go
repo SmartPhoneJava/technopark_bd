@@ -28,8 +28,7 @@ func (db *DataBase) CreateVote(vote models.Vote, slug string) (thread models.Thr
 		return
 	}
 
-	vote.Print()
-	//fmt.Println("thread.Votes_before", thread.Votes)
+	//vote.Print()
 
 	if err != nil {
 		prevVoice = 0
@@ -39,18 +38,15 @@ func (db *DataBase) CreateVote(vote models.Vote, slug string) (thread models.Thr
 	} else {
 		prevVoice = prevVote.Voice
 		if vote, err = db.voteUpdate(tx, vote, thread); err != nil {
-			//fmt.Println("voteUpdate: ", err.Error())
 			err = nil
 			return
 		}
 	}
 
 	newVoice := vote.Voice - prevVoice
-	//fmt.Println("want", newVoice)
 	if thread, err = db.voteThread(tx, newVoice, thread); err != nil {
 		return
 	}
-	//fmt.Println("thread.Votes_after", thread.Votes)
 	err = tx.Commit()
 	return
 }

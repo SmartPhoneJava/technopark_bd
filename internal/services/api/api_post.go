@@ -97,7 +97,7 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 		// 	rw.WriteHeader(http.StatusConflict)
 		// 	sendSuccessJSON(rw, forum, place)
 		// }
-		printResult(err, http.StatusBadRequest, place)
+		printResult(err, http.StatusNotFound, place)
 		return
 	}
 

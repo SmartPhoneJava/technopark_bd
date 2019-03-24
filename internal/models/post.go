@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Post struct {
 	Author   string    `json:"author" db:"author"`
@@ -11,5 +14,13 @@ type Post struct {
 	Message  string    `json:"message" db:"message"`
 	Parent   int       `json:"parent" db:"parent"`
 	Thread   int       `json:"thread" db:"thread"`
-	Path     string    `json:"-" db:"path"`
+	Path     string    `json:"path" db:"path"`
+}
+
+func (post *Post) Print() {
+	fmt.Println("-------Post-------")
+	fmt.Println("--ID:", post.ID)
+	fmt.Println("--Parent:", post.Parent)
+	fmt.Println("--Path:", post.Path)
+	fmt.Println("--Created:", post.Created)
 }

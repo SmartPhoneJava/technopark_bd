@@ -3,7 +3,6 @@ package api
 import (
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -63,9 +62,7 @@ func (h *Handler) GetThreadDetails(rw http.ResponseWriter, r *http.Request) {
 	if thread, err = h.DB.GetThread(slug); err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-
 		printResult(err, http.StatusNotFound, place)
-		fmt.Println("GetThread GetThread GetThread err ")
 		return
 	}
 
