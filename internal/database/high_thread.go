@@ -34,12 +34,18 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	if returnThread, err = db.threadCreate(tx, thread); err != nil {
 		return
 	}
+
+	if err = db.forumUpdateThreads(tx, thread.Forum); err != nil {
+		return
+	}
+
 	err = tx.Commit()
 	return
 }
 
 // UpdateThread handle thread update
-func (db *DataBase) UpdateThread(thread *models.Thread, slug string) (returnThread models.Thread, err error) {
+func (db *DataBase) UpdateThread(thread *models.Thread,
+	slug string) (returnThread models.Thread, err error) {
 
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {

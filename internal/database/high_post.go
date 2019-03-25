@@ -27,6 +27,7 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 	}
 
 	t := time.Now()
+	count := 0
 	for _, post := range posts {
 		// if returnForum, err = db.postConfirmUnique(tx, forum); err != nil {
 		// 	return
@@ -41,7 +42,12 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 		}
 
 		createdPosts = append(createdPosts, post)
+		count++
 	}
+	if err = db.forumUpdatePosts(tx, thatThread.Forum, count); err != nil {
+		return
+	}
+
 	err = tx.Commit()
 	return
 }

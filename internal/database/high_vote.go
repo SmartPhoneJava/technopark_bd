@@ -8,6 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// CreateVote handle vote creation
 func (db *DataBase) CreateVote(vote models.Vote, slug string) (thread models.Thread, err error) {
 
 	var (

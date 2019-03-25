@@ -241,3 +241,24 @@ func queryAddSlug(query *string, arg string) {
 func queryAddThreadReturning(query *string) {
 	*query += ` RETURNING id, slug, author, created, forum, message, title, votes `
 }
+
+// scan row to model Vote
+func threadScan(row *sql.Row) (foundThread models.Thread, err error) {
+	foundThread = models.Thread{}
+	err = row.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title, &foundThread.Votes)
+	return
+}
+
+// scan rows to model Vote
+func threadsScan(rows *sql.Rows, foundThreads *[]models.Thread) (err error) {
+	foundThread := models.Thread{}
+	err = rows.Scan(&foundThread.ID, &foundThread.Slug,
+		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
+		&foundThread.Message, &foundThread.Title, &foundThread.Votes)
+	if err == nil {
+		*foundThreads = append(*foundThreads, foundThread)
+	}
+	return
+}

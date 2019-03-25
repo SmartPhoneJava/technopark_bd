@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Post model
 type Post struct {
 	Author   string    `json:"author" db:"author"`
 	Created  time.Time `json:"created" db:"created"`
@@ -18,6 +19,7 @@ type Post struct {
 	Level    int       `json:"level" db:"level"`
 }
 
+// Print for debug
 func (post *Post) Print() {
 	fmt.Println("-------Post-------")
 	fmt.Println("--ID:", post.ID)

@@ -76,3 +76,11 @@ func (db *DataBase) voteThread(tx *sql.Tx, voice int, thread models.Thread) (upd
 func queryAddVoteReturning(query *string) {
 	*query += ` RETURNING author, voice, thread;`
 }
+
+// scan to model Vote
+func voteScan(row *sql.Row) (foundVote models.Vote, err error) {
+	foundVote = models.Vote{}
+	err = row.Scan(&foundVote.Author, &foundVote.Voice,
+		&foundVote.Thread, &foundVote.IsEdited)
+	return
+}
