@@ -12,6 +12,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type postQuery struct {
+	sortASC     string
+	sortDESC    string
+	compareASC  string
+	compareDESC string
+}
+
 func getPathAndLvl(tx *sql.Tx, id int) (path string, lvl int, err error) {
 	query := `select path, level from Post where id = $1
 						 `
@@ -27,7 +34,8 @@ func updatePath(path *string, id int) {
 }
 
 // postCreate create post
-func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Thread, t time.Time) (createdPost models.Post, err error) {
+func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Thread,
+	t time.Time) (createdPost models.Post, err error) {
 
 	var (
 		path string
@@ -94,57 +102,54 @@ func queryAddConditions(queryInit string, qc QueryGetConditions, sortASC string,
 	}
 	return //23 -> 19
 }
-
-
-1.5
-1.6.7
-1.8.8
-
 */
 
-//
-func queryAddConditions(queryInit string, qc QueryGetConditions,
-	sortASC string, sortDESC string, compareIDASC string, compareIDDESC string) (query string) {
-	query = queryInit
+func queryAddConditions(query *string, qc QueryGetConditions, pq *postQuery) {
+	queryAddMinID(query, qc, pq.compareASC, pq.compareDESC)
+	queryAddSort(query, qc, pq.sortASC, pq.sortDESC)
+	queryAddLimit(query, qc)
+} // 22
+
+func queryAddSort(query *string, qc QueryGetConditions, sortASC string, sortDESC string) {
 	if qc.desc {
-		if qc.mn {
-			query += compareIDDESC
-		}
-		query += sortDESC
+		*query += sortDESC
 	} else {
-		if qc.mn {
-			query += compareIDASC
-		}
-		query += sortASC
+		*query += sortASC
 	}
+}
+
+func queryAddMinID(query *string, qc QueryGetConditions, compareIDASC string, compareIDDESC string) {
+	if qc.mn {
+		if qc.desc {
+			*query += compareIDDESC
+		} else {
+			*query += compareIDASC
+		}
+	}
+}
+
+func queryAddLimit(query *string, qc QueryGetConditions) {
 	if qc.ln {
-		query += ` Limit ` + strconv.Itoa(qc.lv)
+		*query += ` Limit ` + strconv.Itoa(qc.lv)
 	}
-	return //23 -> 19
-}
-
-/*
-var path string
-		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
-			return
-		} // ` and id > ` + strconv.Itoa(qc.mv) + `` //
-		query += compareID //` and path > '` + path + `'`
-*/
-
-func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread, slug string,
-	qc QueryGetConditions) (foundPosts []models.Post, err error) {
-	asc := " order by created, id "
-	desc := " order by created desc, id desc "
-	compareIDASC := `and id > ` + strconv.Itoa(qc.mv)
-	compareIDDESC := `and id < ` + strconv.Itoa(qc.mv)
-	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
 	return
 }
 
-func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread, slug string,
+func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions) (foundPosts []models.Post, err error) {
-	asc := " order by string_to_array(path, '.')::int[], created "
-	desc := " order by	string_to_array(path, '.')::int[] desc, created desc "
+
+	pq := &postQuery{
+		sortASC:     ` order by created, id `,
+		sortDESC:    ` order by created desc, id desc `,
+		compareASC:  `and id > ` + strconv.Itoa(qc.mv),
+		compareDESC: `and id < ` + strconv.Itoa(qc.mv),
+	}
+	foundPosts, err = db.postsGet(tx, thread, qc, pq)
+	return
+}
+
+func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread,
+	qc QueryGetConditions) (foundPosts []models.Post, err error) {
 
 	var path string
 
@@ -153,18 +158,18 @@ func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread, slug string,
 			return
 		}
 	}
-
-	fmt.Println("after:" + path)
-	compareIDASC := ` and path > '` + path + `'`
-	compareIDDESC := ` and path < '` + path + `'`
-	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
+	pq := &postQuery{
+		sortASC: ` order by string_to_array(path, '.')::int[], created `,
+		sortDESC: ` order by	string_to_array(path, '.')::int[] desc, created desc `,
+		compareASC:  ` and path > '` + path + `'`,
+		compareDESC: ` and path < '` + path + `'`,
+	}
+	foundPosts, err = db.postsGet(tx, thread, qc, pq)
 	return
 }
 
-func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread, slug string,
+func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions) (foundPosts []models.Post, err error) {
-	asc := ` order by string_to_array(path, '.')::int[], created `
-	desc := ` order by split_part(path, '.', 2) desc, string_to_array(path, '.')::int[], created `
 
 	var path string
 
@@ -173,83 +178,29 @@ func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread, slug st
 			return
 		}
 	}
-
-	fmt.Println("afterpostsGetParentTree:" + path)
-	compareIDASC := ` and path > '` + path + `'`
-	compareIDDESC := ` and path < '` + path + `' and split_part(path, '.', 2) < split_part('` + path + `', '.', 2)`
-
-	if qc.lv, err = parentTreeGetLimit(tx, thread, qc,
-		asc, desc, compareIDASC, compareIDDESC); err != nil {
-		fmt.Println("parentTreeGetLimit err")
-		return
+	pq := &postQuery{
+		sortASC:    ` order by string_to_array(path, '.')::int[], created `,
+		sortDESC:   ` order by split_part(path, '.', 2) desc, string_to_array(path, '.')::int[], created `,
+		compareASC: ` and path > '` + path + `'`,
+		compareDESC: ` and path < '` + path + `
+			' and split_part(path, '.', 2) < split_part('` + path + `', '.', 2)`,
 	}
 
-	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
+	foundPosts, err = parentTreeGet(tx, thread, qc, pq)
 	return
 }
 
-func parentTreeGetLimit(tx *sql.Tx, thread models.Thread,
-	qc QueryGetConditions, sortASC string, sortDESC string,
-	compareIDASC string, compareIDDESC string) (realLimit int, err error) {
+func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread,
+	qc QueryGetConditions, pq *postQuery) (foundPosts []models.Post, err error) {
 
-	queryInside := `select * from Post where 1 = 1 
+	query := `
+	select id, author, created, forum, message,
+		thread, parent, path, level 
+		 from Post 
+		 where thread = $1 and 
+			 lower(forum) like lower($2)
 	`
-
-	limitNeed := qc.ln
-	qc.ln = false
-	queryInside = queryAddConditions(queryInside, qc, sortASC, sortDESC, compareIDASC, compareIDDESC)
-
-	qc.ln = limitNeed
-
-	query := `select COUNT(*), split_part(path, '.', 2) from ( ` + queryInside + ` ) as A
-					GROUP BY split_part(path, '.', 2), forum, thread
-					HAVING thread = $1 and lower(forum) like lower($2)
-					`
-
-	if qc.desc {
-		query += "order by split_part(path, '.', 2) desc"
-	} else {
-		query += "order by split_part(path, '.', 2)"
-	}
-
-	query += ` Limit $3`
-
-	var rows *sql.Rows
-
-	fmt.Println("prepare query:", query)
-
-	if rows, err = tx.Query(query, thread.ID, thread.Forum, qc.lv); err != nil {
-		return
-	}
-	defer rows.Close()
-
-	fmt.Println("was:", qc.lv)
-
-	realLimit = 0
-	for rows.Next() {
-		var count int
-		var str string
-		if err = rows.Scan(&count, &str); err != nil {
-			break
-		}
-		fmt.Println("str:" + str)
-		realLimit += count
-	}
-	if err != nil {
-		return
-	}
-
-	fmt.Println("now:", realLimit)
-	return
-}
-
-func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread, slug string,
-	qc QueryGetConditions, sortASC string, sortDESC string, compareIDASC string, compareIDDESC string) (foundPosts []models.Post, err error) {
-
-	query := `select id, author, created, forum, message, thread, parent, path, level from
-							Post where thread = $1 and lower(forum) like lower($2)`
-
-	query = queryAddConditions(query, qc, sortASC, sortDESC, compareIDASC, compareIDDESC)
+	queryAddConditions(&query, qc, pq)
 
 	fmt.Println("query:" + query)
 	var rows *sql.Rows
@@ -270,7 +221,60 @@ func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread, slug string,
 		}
 		foundPosts = append(foundPosts, post)
 	}
+
 	return
 }
 
-// 370. lets do 200 - 161 done
+func parentTreeGet(tx *sql.Tx, thread models.Thread,
+	qc QueryGetConditions, pq *postQuery) (foundPosts []models.Post, err error) {
+
+	queryInside := `
+		select split_part(path, '.', 2) as p
+			from Post 
+				where thread = $1 and lower(forum) like lower($2)
+	`
+	queryAddMinID(&queryInside, qc, pq.compareASC, pq.compareDESC)
+
+	groupBy := `
+		select A.p from 
+		( 
+			` + queryInside + ` 
+		) as A
+		GROUP BY A.p
+	`
+	queryAddSort(&groupBy, qc, "order by A.p", "order by A.p desc")
+	queryAddLimit(&groupBy, qc)
+
+	query := `
+	select id, author, created, forum,
+		message, thread, parent, path, level 
+			from Post 
+			where thread = $1 and lower(forum) like lower($2)
+				 	and split_part(path, '.', 2) = ANY 
+				 	(` + groupBy + `)
+	`
+	queryAddSort(&query, qc, pq.sortASC, pq.sortDESC)
+
+	var rows *sql.Rows
+
+	if rows, err = tx.Query(query, thread.ID, thread.Forum); err != nil {
+		return
+	}
+	defer rows.Close()
+
+	foundPosts = []models.Post{}
+	for rows.Next() {
+
+		post := models.Post{}
+		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
+			&post.Forum, &post.Message, &post.Thread, &post.Parent,
+			&post.Path, &post.Level); err != nil {
+			break
+		}
+		foundPosts = append(foundPosts, post)
+	}
+
+	return
+}
+
+// 280

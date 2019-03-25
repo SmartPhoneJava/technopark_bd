@@ -66,21 +66,21 @@ func (db *DataBase) GetPosts(slug string, qgc QueryGetConditions, sort string) (
 	}
 
 	if sort == "tree" {
-		if returnPosts, err = db.postsGetTree(tx, thatThread, slug, qgc); err != nil {
+		if returnPosts, err = db.postsGetTree(tx, thatThread, qgc); err != nil {
 			return
 		}
 		for _, post := range returnPosts {
 			post.Print()
 		}
 	} else if sort == "parent_tree" {
-		if returnPosts, err = db.postsGetParentTree(tx, thatThread, slug, qgc); err != nil {
+		if returnPosts, err = db.postsGetParentTree(tx, thatThread, qgc); err != nil {
 			return
 		}
 		for _, post := range returnPosts {
 			post.Print()
 		}
 	} else {
-		if returnPosts, err = db.postsGetFlat(tx, thatThread, slug, qgc); err != nil {
+		if returnPosts, err = db.postsGetFlat(tx, thatThread, qgc); err != nil {
 			return
 		}
 		for _, post := range returnPosts {
