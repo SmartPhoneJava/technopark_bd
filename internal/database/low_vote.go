@@ -8,6 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// voteCreate
 func (db *DataBase) voteCreate(tx *sql.Tx, vote models.Vote, thread models.Thread) (createdVote models.Vote, err error) {
 
 	query := `INSERT INTO Vote(author, voice, thread) VALUES
@@ -19,6 +20,7 @@ func (db *DataBase) voteCreate(tx *sql.Tx, vote models.Vote, thread models.Threa
 	return
 }
 
+// voteFindByThreadAndAuthor
 func (db DataBase) voteFindByThreadAndAuthor(tx *sql.Tx, thread int, author string) (foundVote models.Vote, err error) {
 
 	query := `SELECT author, voice, thread, isEdited FROM Vote where thread = $1 and author = $2`
@@ -28,6 +30,7 @@ func (db DataBase) voteFindByThreadAndAuthor(tx *sql.Tx, thread int, author stri
 	return
 }
 
+// voteUpdate
 func (db DataBase) voteUpdate(tx *sql.Tx, vote models.Vote, thread models.Thread) (updatedVote models.Vote, err error) {
 
 	query := `	UPDATE Vote set voice = $1                --, isEdited = true
@@ -40,6 +43,7 @@ func (db DataBase) voteUpdate(tx *sql.Tx, vote models.Vote, thread models.Thread
 	return
 }
 
+// voteThread
 func (db *DataBase) voteThread(tx *sql.Tx, voice int, thread models.Thread) (updated models.Thread, err error) {
 
 	query := `	UPDATE Thread set votes = votes + $1

@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// CreateThread create thread
 func (h *Handler) CreateThread(rw http.ResponseWriter, r *http.Request) {
 	const place = "CreateThread"
 	var (
@@ -42,6 +43,7 @@ func (h *Handler) CreateThread(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// UpdateThread update thread
 func (h *Handler) UpdateThread(rw http.ResponseWriter, r *http.Request) {
 	const place = "UpdateThread"
 	var (
@@ -85,8 +87,9 @@ func (h *Handler) UpdateThread(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetThreadDetails get thread details
 func (h *Handler) GetThreadDetails(rw http.ResponseWriter, r *http.Request) {
-	const place = "CreateThread"
+	const place = "GetThreadDetails"
 	var (
 		thread models.Thread
 		slug   string
@@ -115,6 +118,7 @@ func (h *Handler) GetThreadDetails(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetThreads get thread
 func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetThreads"
 	var (

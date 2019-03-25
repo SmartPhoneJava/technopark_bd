@@ -64,6 +64,7 @@ func (db *DataBase) UpdateThread(thread *models.Thread,
 	return
 }
 
+// GetThreads get threads
 func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.Time, existTime bool, desc bool) (returnThreads []models.Thread, err error) {
 
 	var tx *sql.Tx
@@ -85,6 +86,7 @@ func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.T
 	return
 }
 
+// GetThread get thread
 func (db *DataBase) GetThread(slug string) (returnThread models.Thread, err error) {
 
 	var tx *sql.Tx

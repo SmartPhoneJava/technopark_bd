@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -29,7 +28,6 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 // updatedThread
 func (db *DataBase) threadUpdate(tx *sql.Tx, thread *models.Thread, slug string) (updatedThread models.Thread, err error) {
 
-	fmt.Println("slug:", slug)
 	query := `	UPDATE Thread set message = $1, title = $2`
 
 	queryAddSlug(&query, slug)
@@ -44,9 +42,7 @@ func (db *DataBase) threadUpdate(tx *sql.Tx, thread *models.Thread, slug string)
 // getThreads get threads
 func (db *DataBase) threadsGetWithLimit(tx *sql.Tx, slug string, limit int) (foundThreads []models.Thread, err error) {
 
-	query := `select id, slug, author, created, forum, message, title from
-							Thread where forum like $1 Limit $2;
-						 `
+	query := querySelectThread() + ` where forum like $1 Limit $2 `
 
 	var rows *sql.Rows
 
@@ -57,22 +53,16 @@ func (db *DataBase) threadsGetWithLimit(tx *sql.Tx, slug string, limit int) (fou
 
 	foundThreads = []models.Thread{}
 	for rows.Next() {
-		thread := models.Thread{}
-		if err = rows.Scan(&thread.ID, &thread.Slug,
-			&thread.Author, &thread.Created, &thread.Forum,
-			&thread.Message, &thread.Title); err != nil {
+		if err = threadsScan(rows, &foundThreads); err != nil {
 			break
 		}
-
-		foundThreads = append(foundThreads, thread)
 	}
 	return
 }
 
 func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundThreads []models.Thread, err error) {
 
-	query := `select id, slug, author, created, forum, message, title from
-							Thread where lower(forum) like lower($1)`
+	query := querySelectThread() + ` where lower(forum) like lower($1)`
 
 	if tb {
 		if desc {
@@ -115,14 +105,9 @@ func (db *DataBase) threadsGet(tx *sql.Tx, slug string, limit int, lb bool, t ti
 
 	foundThreads = []models.Thread{}
 	for rows.Next() {
-
-		thread := models.Thread{}
-		if err = rows.Scan(&thread.ID, &thread.Slug,
-			&thread.Author, &thread.Created, &thread.Forum,
-			&thread.Message, &thread.Title); err != nil {
+		if err = threadsScan(rows, &foundThreads); err != nil {
 			break
 		}
-		foundThreads = append(foundThreads, thread)
 	}
 	return
 }
@@ -144,8 +129,7 @@ func (db DataBase) threadConfirmUnique(tx *sql.Tx, thread *models.Thread) (found
 
 func (db DataBase) threadFindByTitle(tx *sql.Tx, title string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title, votes from
-	Thread where title like $1`
+	query := querySelectThread() + ` where title like $1`
 
 	row := tx.QueryRow(query, title)
 	foundThread, err = threadScan(row)
@@ -154,8 +138,7 @@ func (db DataBase) threadFindByTitle(tx *sql.Tx, title string) (foundThread mode
 
 func (db DataBase) threadFindBySlug(tx *sql.Tx, slug string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title, votes from
-	Thread where lower(slug) like lower($1)`
+	query := querySelectThread() + `where lower(slug) like lower($1)`
 
 	row := tx.QueryRow(query, slug)
 	foundThread, err = threadScan(row)
@@ -164,8 +147,7 @@ func (db DataBase) threadFindBySlug(tx *sql.Tx, slug string) (foundThread models
 
 func (db DataBase) threadFindByID(tx *sql.Tx, arg int) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title, votes from
-	Thread where id like $1`
+	query := querySelectThread() + `  where id like $1`
 
 	row := tx.QueryRow(query, arg)
 	foundThread, err = threadScan(row)
@@ -184,7 +166,7 @@ func (db *DataBase) threadCheckID(tx *sql.Tx, oldID int) (newID int, err error) 
 
 func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title, votes from Thread`
+	query := querySelectThread()
 	queryAddSlug(&query, arg)
 	row := tx.QueryRow(query)
 	foundThread, err = threadScan(row)
@@ -206,6 +188,11 @@ func queryAddSlug(query *string, arg string) {
 // queryAddThreadReturning add returning for insert,update etc
 func queryAddThreadReturning(query *string) {
 	*query += ` RETURNING id, slug, author, created, forum, message, title, votes `
+}
+
+// queryAddThreadReturning add returning for insert,update etc
+func querySelectThread() string {
+	return ` SELECT id, slug, author, created, forum, message, title, votes from Thread `
 }
 
 // scan row to model Vote

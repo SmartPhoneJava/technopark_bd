@@ -9,6 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// CreateForum create forum
 func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, err error) {
 
 	var tx *sql.Tx
@@ -32,6 +33,7 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	return
 }
 
+// GetForum get forum
 func (db *DataBase) GetForum(slug string) (returnForum models.Forum, err error) {
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {

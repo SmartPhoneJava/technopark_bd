@@ -2,9 +2,11 @@ package api
 
 import (
 	"escapade/internal/models"
+	"fmt"
 	"net/http"
 )
 
+// GetPostfull get postfull
 func (h *Handler) GetPostfull(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetPost"
 	var (
@@ -37,6 +39,9 @@ func (h *Handler) GetPostfull(rw http.ResponseWriter, r *http.Request) {
 		printResult(err, http.StatusNotFound, place)
 		return
 	}
+
+	fmt.Println("GetPost!")
+	post.Post.Print()
 
 	rw.WriteHeader(http.StatusOK)
 	sendSuccessJSON(rw, post, place)

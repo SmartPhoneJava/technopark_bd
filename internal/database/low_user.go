@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// createUser
 func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser models.User, err error) {
 
 	query := `INSERT INTO UserForum(fullname, nickname, email, about) VALUES
@@ -17,15 +18,11 @@ func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser model
 						 `
 	queryAddUserReturning(&query)
 	row := tx.QueryRow(query, user.Fullname, user.Email, user.About)
-
-	createdUser = models.User{}
-	if err = row.Scan(&createdUser.ID, &createdUser.Fullname, &createdUser.Nickname,
-		&createdUser.Email, &createdUser.About); err != nil {
-		return
-	}
+	createdUser, err = userScan(row)
 	return
 }
 
+// updateUser
 func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.User, err error) {
 
 	query := `	UPDATE UserForum set fullname = $1, email = $2, about = $3
@@ -34,14 +31,11 @@ func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.Use
 	queryAddUserReturning(&query)
 	row := tx.QueryRow(query, user.Fullname, user.Email, user.About, user.Nickname)
 
-	updated = models.User{}
-	if err = row.Scan(&updated.ID, &updated.Fullname, &updated.Nickname,
-		&updated.Email, &updated.About); err != nil {
-		return
-	}
+	updated, err = userScan(row)
 	return
 }
 
+// userCheckID
 func (db *DataBase) userCheckID(tx *sql.Tx, oldNickname string) (newNickname string, err error) {
 	var thatUser models.User
 	if thatUser, err = db.findUserByName(tx, oldNickname); err != nil {
@@ -84,21 +78,16 @@ func (db DataBase) userConfirmUnique(tx *sql.Tx, user *models.User) (users *[]mo
 	return
 }
 
+// findUser
 func (db DataBase) findUser(tx *sql.Tx, queryAdd string, arg string) (foundUser models.User, err error) {
 
-	query := `SELECT fullname, nickname, email, about 
-	FROM UserForum ` + queryAdd
-
+	query := querySelectUser() + queryAdd
 	row := tx.QueryRow(query, arg)
-
-	foundUser = models.User{}
-	if err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
-		&foundUser.Email, &foundUser.About); err != nil {
-		return
-	}
+	foundUser, err = userScan(row)
 	return
 }
 
+// findUserByName
 func (db DataBase) findUserByName(tx *sql.Tx, taken string) (foundUser models.User, err error) {
 
 	query := `where lower(nickname) like lower($1)`
@@ -113,36 +102,7 @@ func (db DataBase) findUserByEmail(tx *sql.Tx, taken string) (foundUser models.U
 	return
 }
 
-/*
-query:
-	select fullname, nickname, email, about
-		FROM UserForum as uf
-		where
-		lower(nickname) > lower(E'UO5l6xBUiVhHJ.bill') and
-		(
-		nickname in
-		(
-			select author
-				from Post
-				where
-				lower(uf.nickname) like lower(author) ESCAPE '' and
-				lower(forum) like lower($1)
-		) or
-		nickname in
-		(
-			select author
-				from Thread
-				where
-				lower(uf.nickname) like lower(author) ESCAPE '' and
-				lower(forum) like lower($1)
-		)
-	)
-		order by lower(nickname)
-	  Limit 4
-
-
-*/
-
+// usersGet
 func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 	qc QueryGetConditions) (foundUsers []models.User, err error) {
 
@@ -153,9 +113,7 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 		compareDESC: ` and lower(nickname) < lower('` + qc.nv + `')`,
 	}
 
-	query := `
-	select fullname, nickname, email, about 
-		FROM UserForum as uf 
+	query := querySelectUser() + ` as uf 
 		where (
 			nickname in 
 		(
@@ -195,14 +153,13 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 		}
 		foundUsers = append(foundUsers, user)
 	}
-
 	return
 }
 
+// findUsers
 func (db DataBase) findUsers(tx *sql.Tx, queryAdd string, taken ...string) (foundUsers *[]models.User, err error) {
 
-	query := `SELECT fullname, nickname, email, about 
-	FROM UserForum ` + queryAdd
+	query := querySelectUser() + queryAdd
 
 	var rows *sql.Rows
 
@@ -250,7 +207,7 @@ func (db DataBase) isOnlyEmailUnique(tx *sql.Tx, email string, nickname string) 
 
 // query add returning
 func queryAddUserReturning(query *string) {
-	*query += ` RETURNING id, fullname, nickname, email, about `
+	*query += ` RETURNING fullname, nickname, email, about `
 }
 
 // scan row to model Vote
@@ -259,4 +216,9 @@ func userScan(row *sql.Row) (foundUser models.User, err error) {
 	err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
 		&foundUser.Email, &foundUser.About)
 	return
+}
+
+// querySelectUser select
+func querySelectUser() string {
+	return ` SELECT fullname, nickname, email, about FROM UserForum `
 }

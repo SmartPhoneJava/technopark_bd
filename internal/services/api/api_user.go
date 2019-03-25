@@ -16,27 +16,7 @@ type Handler struct {
 	FileMode              int
 }
 
-// catch CORS preflight
-// @Summary catch CORS preflight
-// @Description catch CORS preflight
-// @ID OK1
-// @Success 200 "successfully"
-// @Router /user [OPTIONS]
-func (h *Handler) Ok(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(http.StatusOK)
-	sendSuccessJSON(rw, nil, "Ok")
-
-	fmt.Println("api/ok - ok")
-	return
-}
-
 // CreateUser create new user
-// @Summary create new user
-// @Description create new user
-// @ID Register
-// @Success 201 {object} models.Result "Create user successfully"
-// @Failure 400 {object} models.Result "Invalid information"
-// @Router /user [POST]
 func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	const place = "CreateUser"
 	var (
@@ -83,6 +63,7 @@ func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+//GetUsers get users
 func (h *Handler) GetUsers(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetUsers"
 	var (
@@ -139,14 +120,6 @@ func (h *Handler) GetUsers(rw http.ResponseWriter, r *http.Request) {
 }
 
 // GetProfile returns model UserPublicInfo
-// @Summary Get some of user fields
-// @Description return public information, such as name or best_score
-// @ID GetProfile
-// @Param name path string false "User name"
-// @Success 200 {object} models.UserPublicInfo "Profile found successfully"
-// @Failure 400 {object} models.Result "Invalid username"
-// @Failure 404 {object} models.Result "User not found"
-// @Router /users/{name}/profile [GET]
 func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetProfile"
 
@@ -179,13 +152,6 @@ func (h *Handler) GetProfile(rw http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProfile updates profile
-// @Summary update user information
-// @Description update public info
-// @ID UpdateProfile
-// @Success 200 {object} models.Result "Get successfully"
-// @Failure 400 {object} models.Result "invalid info"
-// @Failure 401 {object} models.Result "need authorization"
-// @Router /user [PUT]
 func (h *Handler) UpdateProfile(rw http.ResponseWriter, r *http.Request) {
 	const place = "UpdateProfile"
 

@@ -224,6 +224,19 @@ func getPosts(r *http.Request) (posts []models.Post, err error) {
 	return
 }
 
+func getPost(r *http.Request) (post models.Post, err error) {
+
+	if r.Body == nil {
+		err = re.ErrorNoBody()
+		return
+	}
+	defer r.Body.Close()
+
+	_ = json.NewDecoder(r.Body).Decode(&post)
+
+	return
+}
+
 func getVote(r *http.Request) (vote models.Vote, err error) {
 
 	if r.Body == nil {

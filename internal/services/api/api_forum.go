@@ -40,6 +40,7 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetForum
 func (h *Handler) GetForum(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetForum"
 	var (

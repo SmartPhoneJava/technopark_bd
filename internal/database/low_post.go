@@ -56,22 +56,36 @@ func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Threa
 
 	query := `INSERT INTO Post(author, created, forum, message, thread, parent, path, level) VALUES
 						 	($1, $2, $3, $4, $5, $6, $7, $8) 
-						 RETURNING id, author, created, forum, message, thread, parent, path, level;
 						 `
+	queryAddPostReturning(&query)
 	row := tx.QueryRow(query, post.Author, t,
 		thread.Forum, post.Message, thread.ID, post.Parent, path, lvl)
 
 	createdPost = models.Post{}
 	if err = row.Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
 		&createdPost.Forum, &createdPost.Message, &createdPost.Thread, &createdPost.Parent,
-		&createdPost.Path, &createdPost.Level); err != nil {
+		&createdPost.Path, &createdPost.Level, &post.IsEdited); err != nil {
 		return
 	}
 
-	query = `UPDATE Post set path=$1 where id=$2
-						`
+	query = `UPDATE Post set path=$1 where id=$2 `
 	updatePath(&path, createdPost.ID)
 	_, err = tx.Exec(query, path, createdPost.ID)
+
+	return
+}
+
+// postCreate create post
+func (db *DataBase) postUpdate(tx *sql.Tx, post models.Post, id int) (createdPost models.Post, err error) {
+
+	query := `UPDATE Post set message=$1, isEdited=true where id=$2 `
+	queryAddPostReturning(&query)
+	createdPost = models.Post{}
+	err = tx.QueryRow(query, post.Message, id).Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
+		&createdPost.Forum, &createdPost.Message, &createdPost.Thread, &createdPost.Parent,
+		&createdPost.Path, &createdPost.Level, &createdPost.IsEdited)
+	fmt.Print("look at postUpdate")
+	createdPost.Print()
 
 	return
 }
@@ -288,4 +302,27 @@ func parentTreeGet(tx *sql.Tx, thread models.Thread,
 	return
 }
 
-// 280
+func queryAddPostReturning(query *string) {
+	*query += ` RETURNING id, author, created, forum, message, thread, parent, path, level, isEdited `
+}
+
+// scan row to model Vote
+// func postScan(row *sql.Row) (foundUser models.User, err error) {
+// 	foundUser = models.User{}
+// 	err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
+// 		&foundUser.Email, &foundUser.About)
+// 	return
+// }
+
+func postsScan(rows *sql.Rows, foundPosts *[]models.Post) (err error) {
+	foundPost := models.Post{}
+	err = rows.Scan(&foundPost.ID, &foundPost.Author, &foundPost.Created,
+		&foundPost.Forum, &foundPost.Message, &foundPost.Thread, &foundPost.Parent,
+		&foundPost.Path, &foundPost.Level)
+	if err == nil {
+		*foundPosts = append(*foundPosts, foundPost)
+	}
+	return
+}
+
+// 280 -> 307

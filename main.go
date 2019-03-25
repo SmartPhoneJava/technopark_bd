@@ -48,6 +48,7 @@ func main() {
 	r.HandleFunc("/api/thread/{slug}/vote", API.Vote).Methods("POST")
 
 	r.HandleFunc("/api/post/{id}/details", API.GetPostfull).Methods("GET")
+	r.HandleFunc("/api/post/{id}/details", API.UpdatePost).Methods("POST")
 
 	if os.Getenv("PORT") == "" {
 		os.Setenv("PORT", conf.Server.Port)

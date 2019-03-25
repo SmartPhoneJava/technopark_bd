@@ -3,11 +3,37 @@ package database
 import (
 	"database/sql"
 	"escapade/internal/models"
+	"fmt"
 	"time"
 
 	//
 	_ "github.com/lib/pq"
 )
+
+// UpdatePost handle post creation
+func (db *DataBase) UpdatePost(post models.Post, id int) (updatedPost models.Post, err error) {
+
+	var (
+		tx *sql.Tx
+	)
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	if post.Message == "" {
+		fmt.Println("why do you do it")
+		return
+	}
+	if updatedPost, err = db.postUpdate(tx, post, id); err != nil {
+		fmt.Println("updatedPost err")
+		return
+	}
+	fmt.Println("updatedPost success")
+	updatedPost.Print()
+	err = tx.Commit()
+	return
+}
 
 // CreatePost handle post creation
 func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts []models.Post, err error) {

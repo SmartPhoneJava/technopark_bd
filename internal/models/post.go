@@ -11,7 +11,7 @@ type Post struct {
 	Created  time.Time `json:"created" db:"created"`
 	Forum    string    `json:"forum" db:"forum"`
 	ID       int       `json:"id" db:"id"`
-	IsEdited bool      `json:"-" db:"isEdited"`
+	IsEdited bool      `json:"isEdited" db:"isEdited"`
 	Message  string    `json:"message" db:"message"`
 	Parent   int       `json:"parent" db:"parent"`
 	Thread   int       `json:"thread" db:"thread"`
@@ -27,4 +27,5 @@ func (post *Post) Print() {
 	fmt.Println("--Path:", post.Path)
 	fmt.Println("--Level:", post.Level)
 	fmt.Println("--Created:", post.Created)
+	fmt.Println("--IsEdited:", post.IsEdited)
 }

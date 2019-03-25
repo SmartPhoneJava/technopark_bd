@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// Vote vote
 func (h *Handler) Vote(rw http.ResponseWriter, r *http.Request) {
 	const place = "Vote"
 	var (

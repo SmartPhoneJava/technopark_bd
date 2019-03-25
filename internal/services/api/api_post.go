@@ -109,3 +109,46 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 	printResult(err, http.StatusOK, place)
 	return
 }
+
+func (h *Handler) UpdatePost(rw http.ResponseWriter, r *http.Request) {
+	const place = "UpdatePost"
+	var (
+		post models.Post
+		err  error
+		id   int
+	)
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	if post, err = getPost(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if id, err = getPostID(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if post, err = h.DB.UpdatePost(post, id); err != nil {
+		//if err.Error() == re.ErrorForumUserNotExist().Error() {
+		rw.WriteHeader(http.StatusNotFound)
+		sendErrorJSON(rw, err, place)
+		// } else {
+		// 	rw.WriteHeader(http.StatusConflict)
+		// 	sendSuccessJSON(rw, forum, place)
+		// }
+		printResult(err, http.StatusNotFound, place)
+		return
+	}
+
+	post.Print()
+	rw.WriteHeader(http.StatusOK)
+	sendSuccessJSON(rw, post, place)
+	printResult(err, http.StatusOK, place)
+	return
+}

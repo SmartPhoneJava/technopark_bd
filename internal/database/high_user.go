@@ -9,6 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// CreateUser create user
 func (db *DataBase) CreateUser(user *models.User) (foundUsers *[]models.User, createdUser models.User, err error) {
 
 	var tx *sql.Tx
@@ -37,7 +38,6 @@ func (db *DataBase) GetUsers(slug string, qgc QueryGetConditions) (returnUsers [
 	}
 	defer tx.Rollback()
 
-	//var thatForum models.Forum
 	if _, err = db.findForumBySlug(tx, slug); err != nil {
 		return
 	}
@@ -50,6 +50,7 @@ func (db *DataBase) GetUsers(slug string, qgc QueryGetConditions) (returnUsers [
 	return
 }
 
+// GetUser get user
 func (db *DataBase) GetUser(name string) (foundUser models.User, err error) {
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {
@@ -64,6 +65,7 @@ func (db *DataBase) GetUser(name string) (foundUser models.User, err error) {
 	return
 }
 
+// UpdateUser update user
 func (db *DataBase) UpdateUser(user models.User) (foundUser models.User, err error) {
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {

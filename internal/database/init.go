@@ -36,43 +36,15 @@ func Init(CDB config.DatabaseConfig) (db *DataBase, err error) {
 		return
 	}
 	fmt.Println("database/Init open")
-	//if !db.areTablesCreated(CDB.Tables) {
-	if err = db.CreateTables(); err != nil {
+	if err = db.createTables(); err != nil {
 		return
 	}
-	//}
 
 	return
 }
 
-func (db *DataBase) checkTable(tableName string) (err error) {
-	sqlStatement := `
-    SELECT count(1)
-  FROM information_schema.tables tbl 
-  where tbl.table_name like $1;`
-	row := db.Db.QueryRow(sqlStatement, tableName)
-
-	var result int
-	if err = row.Scan(&result); err != nil {
-		fmt.Println(tableName + " doesnt exists. Create it!" + err.Error())
-
-		return
-	}
-	return
-}
-
-func (db *DataBase) areTablesCreated(tables []string) (created bool) {
-	created = true
-	for _, table := range tables {
-		if err := db.checkTable(table); err != nil {
-			created = false
-			break
-		}
-	}
-	return
-}
-
-func (db *DataBase) CreateTables() error {
+// CreateTables creates table
+func (db *DataBase) createTables() error {
 	sqlStatement := `
 
     DROP TABLE IF EXISTS Vote;
