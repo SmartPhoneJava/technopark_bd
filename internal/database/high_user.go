@@ -28,6 +28,28 @@ func (db *DataBase) CreateUser(user *models.User) (foundUsers *[]models.User, cr
 	return
 }
 
+// GetUsers get users
+func (db *DataBase) GetUsers(slug string, qgc QueryGetConditions) (returnUsers []models.User, err error) {
+
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	//var thatForum models.Forum
+	if _, err = db.findForumBySlug(tx, slug); err != nil {
+		return
+	}
+
+	if returnUsers, err = db.usersGet(tx, slug, qgc); err != nil {
+		return
+	}
+
+	err = tx.Commit()
+	return
+}
+
 func (db *DataBase) GetUser(name string) (foundUser models.User, err error) {
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {

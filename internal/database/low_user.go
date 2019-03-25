@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 
 	//
 	_ "github.com/lib/pq"
@@ -12,10 +13,10 @@ import (
 func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser models.User, err error) {
 
 	query := `INSERT INTO UserForum(fullname, nickname, email, about) VALUES
-						 	($1, $2, $3, $4) 
+						 	($1, E'` + user.Nickname + `', $2, $3) 
 						 `
 	queryAddUserReturning(&query)
-	row := tx.QueryRow(query, user.Fullname, user.Nickname, user.Email, user.About)
+	row := tx.QueryRow(query, user.Fullname, user.Email, user.About)
 
 	createdUser = models.User{}
 	if err = row.Scan(&createdUser.ID, &createdUser.Fullname, &createdUser.Nickname,
@@ -109,6 +110,95 @@ func (db DataBase) findUserByEmail(tx *sql.Tx, taken string) (foundUser models.U
 
 	query := `where lower(email) like lower($1)`
 	foundUser, err = db.findUser(tx, query, taken)
+	return
+}
+
+/*
+query:
+	select fullname, nickname, email, about
+		FROM UserForum as uf
+		where
+		lower(nickname) > lower(E'UO5l6xBUiVhHJ.bill') and
+		(
+		nickname in
+		(
+			select author
+				from Post
+				where
+				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(forum) like lower($1)
+		) or
+		nickname in
+		(
+			select author
+				from Thread
+				where
+				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(forum) like lower($1)
+		)
+	)
+		order by lower(nickname)
+	  Limit 4
+
+
+*/
+
+func (db *DataBase) usersGet(tx *sql.Tx, slug string,
+	qc QueryGetConditions) (foundUsers []models.User, err error) {
+
+	pq := &postQuery{
+		sortASC:     ` order by lower(uf.nickname) `,
+		sortDESC:    ` order by lower(uf.nickname) desc `,
+		compareASC:  ` and lower(uf.nickname) > lower(E'` + qc.nv + `')`,
+		compareDESC: ` and lower(uf.nickname) < lower(E'` + qc.nv + `')`,
+	}
+
+	fmt.Println("status:", qc.nn)
+	fmt.Println("status:", qc.nv)
+
+	query := `
+	select fullname, nickname, email, about 
+		FROM UserForum as uf 
+		where (
+			nickname in 
+		(
+			select author
+				from Post
+				where 
+				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(forum) like lower($1)
+		) or
+		nickname in 
+		(
+			select author
+				from Thread
+				where 
+				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(forum) like lower($1)
+		)
+		)
+	`
+	queryAddConditions(&query, qc, pq)
+
+	fmt.Println("query:" + query)
+	var rows *sql.Rows
+
+	if rows, err = tx.Query(query, slug); err != nil {
+		return
+	}
+	defer rows.Close()
+
+	foundUsers = []models.User{}
+	for rows.Next() {
+
+		user := models.User{}
+		if err = rows.Scan(&user.Fullname, &user.Nickname,
+			&user.Email, &user.About); err != nil {
+			break
+		}
+		foundUsers = append(foundUsers, user)
+	}
+
 	return
 }
 

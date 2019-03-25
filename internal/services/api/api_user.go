@@ -1,6 +1,7 @@
 package api
 
 import (
+	data "escapade/internal/database"
 	database "escapade/internal/database"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
@@ -79,6 +80,61 @@ func (h *Handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusCreated)
 	sendSuccessJSON(rw, user, place)
 	printResult(err, http.StatusCreated, place)
+	return
+}
+
+func (h *Handler) GetUsers(rw http.ResponseWriter, r *http.Request) {
+	const place = "GetUsers"
+	var (
+		users      []models.User
+		slug       string
+		limit      int
+		since      string
+		err        error
+		existLimit bool
+		existSince bool
+		desc       bool
+		qgc        data.QueryGetConditions
+	)
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	if slug, err = getSlug(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	if existLimit, limit, err = getLimit(r); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		sendErrorJSON(rw, err, place)
+		printResult(err, http.StatusBadRequest, place)
+		return
+	}
+
+	existSince, since = getNickNameMin(r)
+	desc = getDesc(r)
+
+	fmt.Println("since:", since)
+
+	qgc.InitUser(existSince, since, existLimit, limit, desc)
+
+	if users, err = h.DB.GetUsers(slug, qgc); err != nil {
+		//if err.Error() == re.ErrorForumUserNotExist().Error() {
+		rw.WriteHeader(http.StatusNotFound)
+		sendErrorJSON(rw, err, place)
+		// } else {
+		// 	rw.WriteHeader(http.StatusConflict)
+		// 	sendSuccessJSON(rw, forum, place)
+		// }
+		printResult(err, http.StatusNotFound, place)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	sendSuccessJSON(rw, users, place)
+	printResult(err, http.StatusOK, place)
 	return
 }
 

@@ -9,10 +9,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// CreateThread handle thread creation
+// CreatePost handle post creation
 func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts []models.Post, err error) {
 
-	var tx *sql.Tx
+	var (
+		tx         *sql.Tx
+		thatThread models.Thread
+		count      int
+		t          time.Time
+	)
 	if tx, err = db.Db.Begin(); err != nil {
 		return
 	}
@@ -20,14 +25,12 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 
 	createdPosts = []models.Post{}
 
-	var thatThread models.Thread
-
 	if thatThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
 		return
 	}
 
-	t := time.Now()
-	count := 0
+	t = time.Now()
+	count = 0
 	for _, post := range posts {
 		// if returnForum, err = db.postConfirmUnique(tx, forum); err != nil {
 		// 	return
@@ -52,6 +55,7 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 	return
 }
 
+// GetPosts get posts
 func (db *DataBase) GetPosts(slug string, qgc QueryGetConditions, sort string) (returnPosts []models.Post, err error) {
 
 	var tx *sql.Tx

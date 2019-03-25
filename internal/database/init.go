@@ -83,7 +83,7 @@ func (db *DataBase) CreateTables() error {
 
     CREATE Table UserForum (
         id SERIAL PRIMARY KEY,
-        nickname varchar(80) UNIQUE NOT NULL,
+        nickname varchar(80) UNIQUE NOT NULL collate "C",
         fullname varchar(30) NOT NULL,
         email varchar(50) UNIQUE NOT NULL,
         about varchar(1000) 

@@ -67,6 +67,15 @@ func getLimit(r *http.Request) (exist bool, limit int, err error) {
 	return
 }
 
+func getNickNameMin(r *http.Request) (exist bool, str string) {
+	exist = true
+	str = r.FormValue("since")
+	if str == "" {
+		exist = false
+	}
+	return
+}
+
 func getIDmin(r *http.Request) (exist bool, since int, err error) {
 	exist = true
 	str := r.FormValue("since")

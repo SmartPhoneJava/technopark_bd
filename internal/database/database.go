@@ -25,9 +25,20 @@ type QueryGetConditions struct {
 	tn   bool      // time need
 	mv   int       // min id value
 	mn   bool      // min id need
+	nv   string    // nickname value
+	nn   bool      // nickname need
 	lv   int       // limit value
 	ln   bool      // limit need
 	desc bool      // desc need
+}
+
+func (qgc *QueryGetConditions) InitUser(
+	nn bool, nv string, ln bool, lv int, desc bool) {
+	qgc.nv = nv
+	qgc.nn = nn
+	qgc.lv = lv
+	qgc.ln = ln
+	qgc.desc = desc
 }
 
 func (qgc *QueryGetConditions) InitPost(

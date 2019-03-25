@@ -106,6 +106,7 @@ func queryAddConditions(queryInit string, qc QueryGetConditions, sortASC string,
 
 func queryAddConditions(query *string, qc QueryGetConditions, pq *postQuery) {
 	queryAddMinID(query, qc, pq.compareASC, pq.compareDESC)
+	queryAddNickname(query, qc, pq.compareASC, pq.compareDESC)
 	queryAddSort(query, qc, pq.sortASC, pq.sortDESC)
 	queryAddLimit(query, qc)
 } // 22
@@ -115,6 +116,16 @@ func queryAddSort(query *string, qc QueryGetConditions, sortASC string, sortDESC
 		*query += sortDESC
 	} else {
 		*query += sortASC
+	}
+}
+
+func queryAddNickname(query *string, qc QueryGetConditions, compareIDASC string, compareIDDESC string) {
+	if qc.nn {
+		if qc.desc {
+			*query += compareIDDESC
+		} else {
+			*query += compareIDASC
+		}
 	}
 }
 
