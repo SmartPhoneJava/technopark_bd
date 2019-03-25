@@ -2,6 +2,10 @@ package rerrors
 
 import "errors"
 
+func ErrorInvalidLimit() error {
+	return errors.New("Invalid limit")
+}
+
 func ErrorInvalidDate() error {
 	return errors.New("Invalid date")
 }

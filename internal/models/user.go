@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// User model
 type User struct {
 	ID       int    `json:"-" db:"id"`
 	About    string `json:"about" db:"about"`
@@ -13,17 +14,7 @@ type User struct {
 	Nickname string `json:"nickname" db:"nickname"`
 }
 
-// func (user *User) ToLowerUser() {
-// 	user.Email = strings.ToLower(user.Email)
-// 	user.Fullname = strings.ToLower(user.Fullname)
-// 	user.Nickname = strings.ToLower(user.Nickname)
-// }
-
-// func (user *User) IsTheSameAs(another User) bool {
-// 	return strings.ToLower(user.Email) == strings.ToLower(another.Email) &&
-// 		strings.ToLower(user.Nickname) == strings.ToLower(another.Nickname)
-// }
-
+// FillEmpty fill empty
 func (user *User) FillEmpty(another User) {
 	if strings.Trim(user.Email, " ") == "" {
 		user.Email = another.Email
@@ -36,6 +27,7 @@ func (user *User) FillEmpty(another User) {
 	}
 }
 
+// Print for debug
 func (user *User) Print() {
 	fmt.Println("-------User-------")
 	fmt.Println("--About:", user.About)

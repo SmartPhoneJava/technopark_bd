@@ -147,14 +147,11 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 	qc QueryGetConditions) (foundUsers []models.User, err error) {
 
 	pq := &postQuery{
-		sortASC:     ` order by lower(uf.nickname) `,
-		sortDESC:    ` order by lower(uf.nickname) desc `,
-		compareASC:  ` and lower(uf.nickname) > lower(E'` + qc.nv + `')`,
-		compareDESC: ` and lower(uf.nickname) < lower(E'` + qc.nv + `')`,
+		sortASC:     ` order by lower(nickname) `,
+		sortDESC:    ` order by lower(nickname) desc `,
+		compareASC:  ` and lower(nickname) > lower('` + qc.nv + `')`,
+		compareDESC: ` and lower(nickname) < lower('` + qc.nv + `')`,
 	}
-
-	fmt.Println("status:", qc.nn)
-	fmt.Println("status:", qc.nv)
 
 	query := `
 	select fullname, nickname, email, about 
@@ -165,7 +162,7 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 			select author
 				from Post
 				where 
-				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(uf.nickname) like lower(author) and
 				lower(forum) like lower($1)
 		) or
 		nickname in 
@@ -173,7 +170,7 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 			select author
 				from Thread
 				where 
-				lower(uf.nickname) like lower(author) ESCAPE '' and
+				lower(uf.nickname) like lower(author) and
 				lower(forum) like lower($1)
 		)
 		)
@@ -254,4 +251,12 @@ func (db DataBase) isOnlyEmailUnique(tx *sql.Tx, email string, nickname string) 
 // query add returning
 func queryAddUserReturning(query *string) {
 	*query += ` RETURNING id, fullname, nickname, email, about `
+}
+
+// scan row to model Vote
+func userScan(row *sql.Row) (foundUser models.User, err error) {
+	foundUser = models.User{}
+	err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
+		&foundUser.Email, &foundUser.About)
+	return
 }

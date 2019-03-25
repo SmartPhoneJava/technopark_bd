@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// Thread model
 type Thread struct {
 	Author  string    `json:"author" db:"author"`
 	Created time.Time `json:"created" db:"created"`

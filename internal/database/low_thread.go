@@ -22,12 +22,7 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 	row := tx.QueryRow(query, thread.Slug, thread.Author, thread.Created,
 		thread.Forum, thread.Message, thread.Title)
 
-	createdThread = models.Thread{}
-	if err = row.Scan(&createdThread.ID, &createdThread.Slug,
-		&createdThread.Author, &createdThread.Created, &createdThread.Forum,
-		&createdThread.Message, &createdThread.Title, &createdThread.Votes); err != nil {
-		return
-	}
+	createdThread, err = threadScan(row)
 	return
 }
 
@@ -42,12 +37,7 @@ func (db *DataBase) threadUpdate(tx *sql.Tx, thread *models.Thread, slug string)
 
 	row := tx.QueryRow(query, thread.Message, thread.Title)
 
-	updatedThread = models.Thread{}
-	if err = row.Scan(&updatedThread.ID, &updatedThread.Slug,
-		&updatedThread.Author, &updatedThread.Created, &updatedThread.Forum,
-		&updatedThread.Message, &updatedThread.Title, &updatedThread.Votes); err != nil {
-		return
-	}
+	updatedThread, err = threadScan(row)
 	return
 }
 
@@ -154,49 +144,31 @@ func (db DataBase) threadConfirmUnique(tx *sql.Tx, thread *models.Thread) (found
 
 func (db DataBase) threadFindByTitle(tx *sql.Tx, title string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title from
+	query := `SELECT id, slug, author, created, forum, message, title, votes from
 	Thread where title like $1`
 
 	row := tx.QueryRow(query, title)
-
-	foundThread = models.Thread{}
-	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
-		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
-		&foundThread.Message, &foundThread.Title); err != nil {
-		return
-	}
+	foundThread, err = threadScan(row)
 	return
 }
 
 func (db DataBase) threadFindBySlug(tx *sql.Tx, slug string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title from
+	query := `SELECT id, slug, author, created, forum, message, title, votes from
 	Thread where lower(slug) like lower($1)`
 
 	row := tx.QueryRow(query, slug)
-
-	foundThread = models.Thread{}
-	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
-		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
-		&foundThread.Message, &foundThread.Title); err != nil {
-		return
-	}
+	foundThread, err = threadScan(row)
 	return
 }
 
 func (db DataBase) threadFindByID(tx *sql.Tx, arg int) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title from
+	query := `SELECT id, slug, author, created, forum, message, title, votes from
 	Thread where id like $1`
 
 	row := tx.QueryRow(query, arg)
-
-	foundThread = models.Thread{}
-	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
-		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
-		&foundThread.Message, &foundThread.Title); err != nil {
-		return
-	}
+	foundThread, err = threadScan(row)
 	return
 }
 
@@ -212,16 +184,10 @@ func (db *DataBase) threadCheckID(tx *sql.Tx, oldID int) (newID int, err error) 
 
 func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread models.Thread, err error) {
 
-	query := `SELECT id, slug, author, created, forum, message, title from Thread`
+	query := `SELECT id, slug, author, created, forum, message, title, votes from Thread`
 	queryAddSlug(&query, arg)
-
-	foundThread = models.Thread{}
-	if err = tx.QueryRow(query).Scan(&foundThread.ID, &foundThread.Slug,
-		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
-		&foundThread.Message, &foundThread.Title); err != nil {
-		//err = re.ErrorThreadNotExist()
-		return
-	}
+	row := tx.QueryRow(query)
+	foundThread, err = threadScan(row)
 	return
 }
 

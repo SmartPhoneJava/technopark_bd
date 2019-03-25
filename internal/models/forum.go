@@ -11,6 +11,7 @@ type Forum struct {
 	User    string `json:"user" db:"user_nickname"`
 }
 
+// Print for debug
 func (forum *Forum) Print() {
 	fmt.Println("-------Forum-------")
 	fmt.Println("--Posts:", forum.Posts)

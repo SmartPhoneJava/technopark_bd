@@ -15,25 +15,16 @@ func (db *DataBase) voteCreate(tx *sql.Tx, vote models.Vote, thread models.Threa
 						 `
 	queryAddVoteReturning(&query)
 	row := tx.QueryRow(query, vote.Author, vote.Voice, thread.ID)
-
-	createdVote = models.Vote{}
-	if err = row.Scan(&createdVote.Author, &createdVote.Voice,
-		&createdVote.Thread); err != nil {
-		return
-	}
+	createdVote, err = voteScan(row)
 	return
 }
 
 func (db DataBase) voteFindByThreadAndAuthor(tx *sql.Tx, thread int, author string) (foundVote models.Vote, err error) {
 
-	query := `SELECT voice, thread, author, isEdited FROM Vote where thread = $1 and author = $2`
+	query := `SELECT author, voice, thread, isEdited FROM Vote where thread = $1 and author = $2`
 
 	row := tx.QueryRow(query, thread, author)
-
-	foundVote = models.Vote{}
-	if err = row.Scan(&foundVote.Voice, &foundVote.Thread, &foundVote.Author, &foundVote.IsEdited); err != nil {
-		return
-	}
+	foundVote, err = voteScan(row)
 	return
 }
 
@@ -45,12 +36,7 @@ func (db DataBase) voteUpdate(tx *sql.Tx, vote models.Vote, thread models.Thread
 	queryAddVoteReturning(&query)
 
 	row := tx.QueryRow(query, vote.Voice, vote.Author, thread.ID)
-
-	updatedVote = models.Vote{}
-	if err = row.Scan(&updatedVote.Author, &updatedVote.Voice,
-		&updatedVote.Thread); err != nil {
-		return
-	}
+	updatedVote, err = voteScan(row)
 	return
 }
 
@@ -63,18 +49,13 @@ func (db *DataBase) voteThread(tx *sql.Tx, voice int, thread models.Thread) (upd
 
 	row := tx.QueryRow(query, voice, thread.ID)
 
-	updated = models.Thread{}
-	if err = row.Scan(&updated.ID, &updated.Slug, &updated.Author,
-		&updated.Created, &updated.Forum, &updated.Message,
-		&updated.Title, &updated.Votes); err != nil {
-		return
-	}
+	updated, err = threadScan(row)
 	return
 }
 
 // query add returning
 func queryAddVoteReturning(query *string) {
-	*query += ` RETURNING author, voice, thread;`
+	*query += ` RETURNING author, voice, thread, isEdited;`
 }
 
 // scan to model Vote

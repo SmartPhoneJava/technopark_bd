@@ -27,6 +27,30 @@ func getNickname(r *http.Request) (nickname string, err error) {
 	return
 }
 
+func getPostID(r *http.Request) (id int, err error) {
+	var (
+		vars map[string]string
+		str  string
+	)
+
+	vars = mux.Vars(r)
+
+	if str = vars["id"]; str == "" {
+		err = re.ErrorInvalidID()
+		return
+	}
+
+	if id, err = strconv.Atoi(str); err != nil {
+		return
+	}
+	if id < 0 {
+		err = re.ErrorInvalidID()
+		return
+	}
+
+	return
+}
+
 func getSlug(r *http.Request) (slug string, err error) {
 	var (
 		vars map[string]string
@@ -62,7 +86,13 @@ func getLimit(r *http.Request) (exist bool, limit int, err error) {
 		exist = false
 		return
 	}
-	limit, err = strconv.Atoi(str)
+	if limit, err = strconv.Atoi(str); err != nil {
+		return
+	}
+	if limit < 0 {
+		err = re.ErrorInvalidLimit()
+		return
+	}
 
 	return
 }
@@ -70,6 +100,15 @@ func getLimit(r *http.Request) (exist bool, limit int, err error) {
 func getNickNameMin(r *http.Request) (exist bool, str string) {
 	exist = true
 	str = r.FormValue("since")
+	if str == "" {
+		exist = false
+	}
+	return
+}
+
+func getRelated(r *http.Request) (exist bool, str string) {
+	exist = true
+	str = r.FormValue("related")
 	if str == "" {
 		exist = false
 	}
@@ -197,13 +236,3 @@ func getVote(r *http.Request) (vote models.Vote, err error) {
 
 	return
 }
-
-/*
-2019-03-24T16:20:20.425Z
-2019-03-24T16:20:20.450Z
-2019-03-24T16:20:20.458Z
-
-2019-03-24T16:20:20.410Z
-2019-03-24T16:20:20.425Z
-2019-03-24T16:20:20.425Z
-*/
