@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -16,15 +17,35 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 
 	query := `INSERT INTO Thread(slug, author, created, forum, message, title) VALUES
 						 	($1, $2, $3, $4, $5, $6) 
-						 RETURNING id, slug, author, created, forum, message, title;
 						 `
+	queryAddThreadReturning(&query)
 	row := tx.QueryRow(query, thread.Slug, thread.Author, thread.Created,
 		thread.Forum, thread.Message, thread.Title)
 
 	createdThread = models.Thread{}
 	if err = row.Scan(&createdThread.ID, &createdThread.Slug,
 		&createdThread.Author, &createdThread.Created, &createdThread.Forum,
-		&createdThread.Message, &createdThread.Title); err != nil {
+		&createdThread.Message, &createdThread.Title, &createdThread.Votes); err != nil {
+		return
+	}
+	return
+}
+
+// updatedThread
+func (db *DataBase) threadUpdate(tx *sql.Tx, thread *models.Thread, slug string) (updatedThread models.Thread, err error) {
+
+	fmt.Println("slug:", slug)
+	query := `	UPDATE Thread set message = $1, title = $2`
+
+	queryAddSlug(&query, slug)
+	queryAddThreadReturning(&query)
+
+	row := tx.QueryRow(query, thread.Message, thread.Title)
+
+	updatedThread = models.Thread{}
+	if err = row.Scan(&updatedThread.ID, &updatedThread.Slug,
+		&updatedThread.Author, &updatedThread.Created, &updatedThread.Forum,
+		&updatedThread.Message, &updatedThread.Title, &updatedThread.Votes); err != nil {
 		return
 	}
 	return
@@ -191,26 +212,32 @@ func (db *DataBase) threadCheckID(tx *sql.Tx, oldID int) (newID int, err error) 
 
 func (db DataBase) threadFindByIDorSlug(tx *sql.Tx, arg string) (foundThread models.Thread, err error) {
 
-	var (
-		id  int
-		row *sql.Row
-	)
 	query := `SELECT id, slug, author, created, forum, message, title from Thread`
-	if id, err = strconv.Atoi(arg); err != nil {
-		query += ` where lower(slug) like lower($1)`
-		row = tx.QueryRow(query, arg)
-		err = nil
-	} else {
-		query += ` where id = $1`
-		row = tx.QueryRow(query, id)
-	}
+	queryAddSlug(&query, arg)
 
 	foundThread = models.Thread{}
-	if err = row.Scan(&foundThread.ID, &foundThread.Slug,
+	if err = tx.QueryRow(query).Scan(&foundThread.ID, &foundThread.Slug,
 		&foundThread.Author, &foundThread.Created, &foundThread.Forum,
 		&foundThread.Message, &foundThread.Title); err != nil {
 		//err = re.ErrorThreadNotExist()
 		return
 	}
 	return
+}
+
+// addings to query
+
+// queryAddSlug identifier thread by slug_or_id
+func queryAddSlug(query *string, arg string) {
+
+	if _, err := strconv.Atoi(arg); err != nil {
+		*query += ` where lower(slug) like lower('` + arg + `')`
+	} else {
+		*query += ` where id = ` + arg
+	}
+}
+
+// queryAddThreadReturning add returning for insert,update etc
+func queryAddThreadReturning(query *string) {
+	*query += ` RETURNING id, slug, author, created, forum, message, title, votes `
 }

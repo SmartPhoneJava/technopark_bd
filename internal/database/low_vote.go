@@ -12,8 +12,8 @@ func (db *DataBase) voteCreate(tx *sql.Tx, vote models.Vote, thread models.Threa
 
 	query := `INSERT INTO Vote(author, voice, thread) VALUES
 						 	($1, $2, $3) 
-						 RETURNING author, voice, thread;
 						 `
+	queryAddVoteReturning(&query)
 	row := tx.QueryRow(query, vote.Author, vote.Voice, thread.ID)
 
 	createdVote = models.Vote{}
@@ -39,10 +39,10 @@ func (db DataBase) voteFindByThreadAndAuthor(tx *sql.Tx, thread int, author stri
 
 func (db DataBase) voteUpdate(tx *sql.Tx, vote models.Vote, thread models.Thread) (updatedVote models.Vote, err error) {
 
-	query := `	UPDATE Vote set voice = $1--, isEdited = true
+	query := `	UPDATE Vote set voice = $1                --, isEdited = true
 		where author = $2 and thread = $3 and isEdited = false
-		RETURNING author, voice, thread;
 	`
+	queryAddVoteReturning(&query)
 
 	row := tx.QueryRow(query, vote.Voice, vote.Author, thread.ID)
 
@@ -58,8 +58,8 @@ func (db *DataBase) voteThread(tx *sql.Tx, voice int, thread models.Thread) (upd
 
 	query := `	UPDATE Thread set votes = votes + $1
 								where id = $2
-								RETURNING id, slug, author, created, forum, message, title, votes
 						 `
+	queryAddThreadReturning(&query)
 
 	row := tx.QueryRow(query, voice, thread.ID)
 
@@ -72,9 +72,7 @@ func (db *DataBase) voteThread(tx *sql.Tx, voice int, thread models.Thread) (upd
 	return
 }
 
-/*
-Author   string `json:"nickname" db:"author"`
-Voice    int    `json:"voice" db:"voice"`
-Thread   int    `json:"-" db:"thread"`
-IsEdited bool   `json:"-" db:"isEdited"`
-*/
+// query add returning
+func queryAddVoteReturning(query *string) {
+	*query += ` RETURNING author, voice, thread;`
+}

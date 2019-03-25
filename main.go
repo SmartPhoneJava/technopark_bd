@@ -38,6 +38,7 @@ func main() {
 	r.HandleFunc("/api/forum/{slug}/threads", API.GetThreads).Methods("GET")
 
 	r.HandleFunc("/api/thread/{slug}/details", API.GetThreadDetails).Methods("GET")
+	r.HandleFunc("/api/thread/{slug}/details", API.UpdateThread).Methods("POST")
 
 	r.HandleFunc("/api/thread/{slug}/create", API.CreatePosts).Methods("POST")
 	r.HandleFunc("/api/thread/{slug}/posts", API.GetPosts).Methods("GET")

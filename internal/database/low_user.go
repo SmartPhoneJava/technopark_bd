@@ -13,8 +13,8 @@ func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser model
 
 	query := `INSERT INTO UserForum(fullname, nickname, email, about) VALUES
 						 	($1, $2, $3, $4) 
-						 RETURNING id, fullname, nickname, email, about;
 						 `
+	queryAddUserReturning(&query)
 	row := tx.QueryRow(query, user.Fullname, user.Nickname, user.Email, user.About)
 
 	createdUser = models.User{}
@@ -29,8 +29,8 @@ func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.Use
 
 	query := `	UPDATE UserForum set fullname = $1, email = $2, about = $3
 								where nickname = $4
-								RETURNING id, fullname, nickname, email, about;
 						`
+	queryAddUserReturning(&query)
 	row := tx.QueryRow(query, user.Fullname, user.Email, user.About, user.Nickname)
 
 	updated = models.User{}
@@ -159,4 +159,9 @@ func (db DataBase) isOnlyEmailUnique(tx *sql.Tx, email string, nickname string) 
 	query := `where lower(email) like lower($1) and lower(nickname) not like lower($2)`
 	foundUsers, err = db.findUsers(tx, query, email, nickname)
 	return
+}
+
+// query add returning
+func queryAddUserReturning(query *string) {
+	*query += ` RETURNING id, fullname, nickname, email, about `
 }

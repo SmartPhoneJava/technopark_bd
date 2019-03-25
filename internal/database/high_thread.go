@@ -38,6 +38,26 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 	return
 }
 
+// UpdateThread handle thread update
+func (db *DataBase) UpdateThread(thread *models.Thread, slug string) (returnThread models.Thread, err error) {
+
+	var tx *sql.Tx
+	if tx, err = db.Db.Begin(); err != nil {
+		return
+	}
+	defer tx.Rollback()
+
+	// if returnThread, err = db.threadConfirmUnique(tx, thread); err != nil {
+	// 	return
+	// }
+
+	if returnThread, err = db.threadUpdate(tx, thread, slug); err != nil {
+		return
+	}
+	err = tx.Commit()
+	return
+}
+
 func (db *DataBase) GetThreads(slug string, limit int, existLimit bool, t time.Time, existTime bool, desc bool) (returnThreads []models.Thread, err error) {
 
 	var tx *sql.Tx
