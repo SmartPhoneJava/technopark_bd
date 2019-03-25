@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"time"
 
 	//
 	_ "github.com/lib/pq"
@@ -11,4 +12,40 @@ import (
 // Support methods Login, Register
 type DataBase struct {
 	Db *sql.DB
+}
+
+type QueryParameters struct {
+	query  string
+	thread int
+	forum  int
+}
+
+type QueryGetConditions struct {
+	tv   time.Time // time value
+	tn   bool      // time need
+	mv   int       // min id value
+	mn   bool      // min id need
+	lv   int       // limit value
+	ln   bool      // limit need
+	desc bool      // desc need
+}
+
+func (qgc *QueryGetConditions) InitPost(
+	mn bool, mv int, ln bool, lv int, desc bool) {
+	qgc.mv = mv
+	qgc.mn = mn
+	qgc.lv = lv
+	qgc.ln = ln
+	qgc.desc = desc
+}
+
+func (qgc *QueryGetConditions) Init(tv time.Time,
+	tn bool, lv int, mn bool, mv int, ln bool, desc bool) {
+	qgc.tv = tv
+	qgc.tn = tn
+	qgc.mv = mv
+	qgc.mn = mn
+	qgc.lv = lv
+	qgc.ln = ln
+	qgc.desc = desc
 }

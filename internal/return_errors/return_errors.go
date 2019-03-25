@@ -2,6 +2,10 @@ package rerrors
 
 import "errors"
 
+func ErrorInvalidDate() error {
+	return errors.New("Invalid date")
+}
+
 // ErrorInvalidName call it, if client give you
 // 	invalid username
 func ErrorInvalidName() error {

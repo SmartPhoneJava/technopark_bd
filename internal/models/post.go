@@ -15,6 +15,7 @@ type Post struct {
 	Parent   int       `json:"parent" db:"parent"`
 	Thread   int       `json:"thread" db:"thread"`
 	Path     string    `json:"path" db:"path"`
+	Level    int       `json:"level" db:"level"`
 }
 
 func (post *Post) Print() {
@@ -22,5 +23,6 @@ func (post *Post) Print() {
 	fmt.Println("--ID:", post.ID)
 	fmt.Println("--Parent:", post.Parent)
 	fmt.Println("--Path:", post.Path)
+	fmt.Println("--Level:", post.Level)
 	fmt.Println("--Created:", post.Created)
 }

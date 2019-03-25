@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -68,6 +67,26 @@ func getLimit(r *http.Request) (exist bool, limit int, err error) {
 	return
 }
 
+func getIDmin(r *http.Request) (exist bool, since int, err error) {
+	exist = true
+	str := r.FormValue("since")
+	if str == "" {
+		exist = false
+		return
+	}
+
+	if since, err = strconv.Atoi(str); err != nil {
+		return
+	} else {
+		if since < 0 {
+			err = re.ErrorInvalidDate()
+			return
+		}
+	}
+
+	return
+}
+
 func getTime(r *http.Request) (exist bool, t time.Time, err error) {
 
 	exist = true
@@ -77,13 +96,27 @@ func getTime(r *http.Request) (exist bool, t time.Time, err error) {
 		return
 	}
 
+	var num int
+
 	if t, err = time.Parse("2006-01-02T15:04:05.000+03:00", str); err != nil {
-		t, err = time.Parse("2006-01-02T15:04:05.000Z", str)
+		if t, err = time.Parse("2006-01-02T15:04:05.000Z", str); err != nil {
+			if num, err = strconv.Atoi(str); err != nil {
+				return
+			} else {
+				if num < 0 {
+					err = re.ErrorInvalidDate()
+					return
+				} else if num < 10000 {
+					t = time.Date(num, 0, 0, 0, 0, 0, 0, time.UTC)
+				} else {
+					err = re.ErrorInvalidDate()
+					return
+				}
+			}
+		}
 
 	}
-	if err == nil {
-		fmt.Println("i got:", t.String())
-	}
+
 	return
 }
 
@@ -155,3 +188,13 @@ func getVote(r *http.Request) (vote models.Vote, err error) {
 
 	return
 }
+
+/*
+2019-03-24T16:20:20.425Z
+2019-03-24T16:20:20.450Z
+2019-03-24T16:20:20.458Z
+
+2019-03-24T16:20:20.410Z
+2019-03-24T16:20:20.425Z
+2019-03-24T16:20:20.425Z
+*/

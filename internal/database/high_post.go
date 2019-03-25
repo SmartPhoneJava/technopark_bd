@@ -46,7 +46,7 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 	return
 }
 
-func (db *DataBase) GetPosts(slug string, limit int, existLimit bool, t time.Time, existTime bool, sort string, desc bool) (returnPosts []models.Post, err error) {
+func (db *DataBase) GetPosts(slug string, qgc QueryGetConditions, sort string) (returnPosts []models.Post, err error) {
 
 	var tx *sql.Tx
 	if tx, err = db.Db.Begin(); err != nil {
@@ -66,22 +66,25 @@ func (db *DataBase) GetPosts(slug string, limit int, existLimit bool, t time.Tim
 	}
 
 	if sort == "tree" {
-		if returnPosts, err = db.postsGetTree(tx, thatThread, slug, limit, existLimit, t, existTime, desc); err != nil {
+		if returnPosts, err = db.postsGetTree(tx, thatThread, slug, qgc); err != nil {
 			return
 		}
 		for _, post := range returnPosts {
 			post.Print()
 		}
 	} else if sort == "parent_tree" {
-		if returnPosts, err = db.postsGetParentTree(tx, thatThread, slug, limit, existLimit, t, existTime, desc); err != nil {
+		if returnPosts, err = db.postsGetParentTree(tx, thatThread, slug, qgc); err != nil {
 			return
 		}
 		for _, post := range returnPosts {
 			post.Print()
 		}
 	} else {
-		if returnPosts, err = db.postsGetFlat(tx, thatThread, slug, limit, existLimit, t, existTime, desc); err != nil {
+		if returnPosts, err = db.postsGetFlat(tx, thatThread, slug, qgc); err != nil {
 			return
+		}
+		for _, post := range returnPosts {
+			post.Print()
 		}
 	}
 

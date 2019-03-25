@@ -1,9 +1,9 @@
 package api
 
 import (
+	data "escapade/internal/database"
 	"escapade/internal/models"
 	"net/http"
-	"time"
 )
 
 func (h *Handler) CreatePosts(rw http.ResponseWriter, r *http.Request) {
@@ -56,11 +56,12 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 		slug       string
 		sort       string
 		limit      int
-		t          time.Time
+		since      int
 		err        error
 		existLimit bool
-		existTime  bool
+		existSince bool
 		desc       bool
+		qgc        data.QueryGetConditions
 	)
 
 	rw.Header().Set("Content-Type", "application/json")
@@ -79,7 +80,7 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if existTime, t, err = getTime(r); err != nil {
+	if existSince, since, err = getIDmin(r); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		sendErrorJSON(rw, err, place)
 		printResult(err, http.StatusBadRequest, place)
@@ -89,7 +90,9 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 	desc = getDesc(r)
 	sort = getSort(r)
 
-	if posts, err = h.DB.GetPosts(slug, limit, existLimit, t, existTime, sort, desc); err != nil {
+	qgc.InitPost(existSince, since, existLimit, limit, desc)
+
+	if posts, err = h.DB.GetPosts(slug, qgc, sort); err != nil {
 		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)

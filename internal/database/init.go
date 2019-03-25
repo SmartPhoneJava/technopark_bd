@@ -131,12 +131,13 @@ func (db *DataBase) CreateTables() error {
         id SERIAL PRIMARY KEY,
         author varchar(120) not null,
         forum varchar(120),
-        message varchar(1600) not null,
+        message varchar(2400) not null,
         created    TIMESTAMPTZ,
         isEdited boolean default false,
         thread int,
         parent int,
-        path varchar(1000)
+        path varchar(1000),
+        level int
     );
 
     ALTER TABLE Post

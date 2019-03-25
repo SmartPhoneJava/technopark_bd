@@ -12,17 +12,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func postPath(tx *sql.Tx, id int) (path string, err error) {
-	query := `select path from Post where id = $1
+func getPathAndLvl(tx *sql.Tx, id int) (path string, lvl int, err error) {
+	query := `select path, level from Post where id = $1
 						 `
-	row := tx.QueryRow(query, id)
 
-	if err = row.Scan(&path); err != nil {
-		fmt.Println("ooops")
+	if err = tx.QueryRow(query, id).Scan(&path, &lvl); err != nil {
 		return
 	}
-
-	updatePath(&path, id)
 	return
 }
 
@@ -33,33 +29,34 @@ func updatePath(path *string, id int) {
 // postCreate create post
 func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Thread, t time.Time) (createdPost models.Post, err error) {
 
-	var path string
+	var (
+		path string
+		lvl  int
+	)
 	if post.Parent == 0 {
 		path = "0"
+		lvl = 0
 	} else {
-		if path, err = postPath(tx, post.Parent); err != nil {
+		if path, lvl, err = getPathAndLvl(tx, post.Parent); err != nil {
 			return
 		}
 		if path == "" {
 			err = re.ErrorInvalidPath()
-			fmt.Println("no path")
 		}
 	}
+	lvl++
 
-	// concat_ws('.', $7, id::text))
-
-	query := `INSERT INTO Post(author, created, forum, message, thread, parent, path) VALUES
-						 	($1, $2, $3, $4, $5, $6, $7) 
-						 RETURNING id, author, created, forum, message, thread, parent, path;
+	query := `INSERT INTO Post(author, created, forum, message, thread, parent, path, level) VALUES
+						 	($1, $2, $3, $4, $5, $6, $7, $8) 
+						 RETURNING id, author, created, forum, message, thread, parent, path, level;
 						 `
 	row := tx.QueryRow(query, post.Author, t,
-		thread.Forum, post.Message, thread.ID, post.Parent, path)
+		thread.Forum, post.Message, thread.ID, post.Parent, path, lvl)
 
 	createdPost = models.Post{}
 	if err = row.Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
 		&createdPost.Forum, &createdPost.Message, &createdPost.Thread, &createdPost.Parent,
-		&createdPost.Path); err != nil {
-		fmt.Println("no create")
+		&createdPost.Path, &createdPost.Level); err != nil {
 		return
 	}
 
@@ -71,284 +68,193 @@ func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Threa
 	return
 }
 
-func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundPosts []models.Post, err error) {
+/*
+// for threads
 
-	query := `select id, author, created, forum, message, thread, parent from
-							Post where thread = $1 and lower(forum) like lower($2)`
-
-	if tb {
-		if desc {
+func queryAddConditions(queryInit string, qc QueryGetConditions, sortASC string, sortDESC string) (query string) {
+	query = queryInit
+	if qc.tn {
+		if qc.desc {
 			query += ` and created <= $3`
-			query += ` order by created desc, id desc`
+			query += sortDESC
 		} else {
 			query += ` and created >= $3`
-			query += ` order by created, id`
+			query += sortASC
 		}
-		if lb {
+		if qc.ln {
 			query += ` Limit $4`
 		}
-	} else if lb {
-		if desc {
-			query += ` order by created desc, id desc`
+	} else if qc.ln {
+		if qc.desc {
+			query += sortDESC
 		} else {
-			query += ` order by created, id`
+			query += sortASC
 		}
 		query += ` Limit $3`
 	}
+	return //23 -> 19
+}
 
-	var rows *sql.Rows
 
-	if tb {
-		if lb {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t, limit)
-		} else {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t)
+1.5
+1.6.7
+1.8.8
+
+*/
+
+//
+func queryAddConditions(queryInit string, qc QueryGetConditions,
+	sortASC string, sortDESC string, compareIDASC string, compareIDDESC string) (query string) {
+	query = queryInit
+	if qc.desc {
+		if qc.mn {
+			query += compareIDDESC
 		}
-	} else if lb {
-		rows, err = tx.Query(query, thread.ID, thread.Forum, limit)
+		query += sortDESC
 	} else {
-		rows, err = tx.Query(query, thread.ID, thread.Forum)
-	}
-
-	if err != nil {
-		fmt.Println("sorry100")
-		return
-	}
-	defer rows.Close()
-
-	foundPosts = []models.Post{}
-	for rows.Next() {
-
-		post := models.Post{}
-		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
-			&post.Forum, &post.Message, &post.Thread, &post.Parent); err != nil {
-			break
+		if qc.mn {
+			query += compareIDASC
 		}
-		foundPosts = append(foundPosts, post)
+		query += sortASC
 	}
-	return
-}
-
-func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundPosts []models.Post, err error) {
-
-	query := `select id, author, created, forum, message, thread, parent, path from
-							Post where thread = $1 and lower(forum) like lower($2)`
-
-	if tb {
-		if desc {
-			query += ` and created <= $3`
-			query += ` order by
-												  string_to_array(path, '.')::int[] desc, created desc;
-							`
-		} else {
-			query += ` and created >= $3`
-			query += ` order by
-													string_to_array(path, '.')::int[], created`
-		}
-		if lb {
-			query += ` Limit $4`
-		}
-	} else if lb {
-		if desc {
-			query += ` order by 
-													string_to_array(path, '.')::int[] desc, created desc`
-		} else {
-			query += ` order by 
-													string_to_array(path, '.')::int[], created`
-		}
-		query += ` Limit $3`
+	if qc.ln {
+		query += ` Limit ` + strconv.Itoa(qc.lv)
 	}
-
-	var rows *sql.Rows
-
-	if tb {
-		if lb {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t, limit)
-		} else {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t)
-		}
-	} else if lb {
-		rows, err = tx.Query(query, thread.ID, thread.Forum, limit)
-	} else {
-		rows, err = tx.Query(query, thread.ID, thread.Forum)
-	}
-
-	if err != nil {
-		fmt.Println("sorry163")
-		return
-	}
-	defer rows.Close()
-
-	foundPosts = []models.Post{}
-	for rows.Next() {
-
-		post := models.Post{}
-		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
-			&post.Forum, &post.Message, &post.Thread, &post.Parent,
-			&post.Path); err != nil {
-			fmt.Println("wrong path")
-			break
-		}
-		foundPosts = append(foundPosts, post)
-	}
-	return
-}
-
-func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread, slug string, limit int, lb bool, t time.Time, tb bool, desc bool) (foundPosts []models.Post, err error) {
-
-	query := `select id, author, created, forum, message, thread, parent, path from
-							Post where thread = $1 and lower(forum) like lower($2)`
-
-	if tb {
-		if desc {
-			query += ` and created <= $3`
-			query += ` order by
-			split_part(path, '.', 2) desc, string_to_array(path, '.')::int[], created;
-							`
-		} else {
-			query += ` and created >= $3`
-			query += ` order by
-													string_to_array(path, '.')::int[], created`
-		}
-		if lb {
-			query += ` Limit $4`
-		}
-	} else if lb {
-		if desc {
-			query += ` order by 
-				split_part(path, '.', 2) desc, string_to_array(path, '.')::int[], created
-				`
-		} else {
-			query += ` order by 
-													string_to_array(path, '.')::int[], created`
-		}
-		query += ` Limit $3`
-	}
-
-	var rows *sql.Rows
-
-	if tb {
-		if lb {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t, limit)
-		} else {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t)
-		}
-	} else if lb {
-		rows, err = tx.Query(query, thread.ID, thread.Forum, limit)
-	} else {
-		rows, err = tx.Query(query, thread.ID, thread.Forum)
-	}
-
-	if err != nil {
-		fmt.Println("sorry163")
-		return
-	}
-	defer rows.Close()
-
-	foundPosts = []models.Post{}
-	for rows.Next() {
-
-		post := models.Post{}
-		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
-			&post.Forum, &post.Message, &post.Thread, &post.Parent,
-			&post.Path); err != nil {
-			fmt.Println("wrong path")
-			break
-		}
-		foundPosts = append(foundPosts, post)
-	}
-	return
-}
-
-type QueryParameters struct {
-	query  string
-	thread int
-	forum  int
-}
-
-type QueryConditions struct {
-	tv   time.Time // time value
-	tn   bool      // time need
-	lv   int       // limit value
-	ln   bool      // limit need
-	desc bool      // desc need
-}
-
-func queryAddCondition(query *string, yes bool, add string) {
-	if yes {
-		*query = *query + add
-	}
+	return //23 -> 19
 }
 
 /*
-func queryAddConditions(query *string, qc QueryConditions, sort string) {
-	if qc.tn {
-		queryAddCondition(query, qc.desc, " and created <= $3")
-		queryAddCondition(query, !qc.desc, " and created >= $3")
-		queryAddCondition(query, qc.desc,, sort + " desc")
-		queryAddCondition(query, !qc.desc,, sort)
-		queryAddCondition(query, qc.ln, " Limit $4")
-	} else {
-
-		queryAddCondition(query, qc.desc,, sort + " desc")
-		queryAddCondition(query, !qc.desc,, sort)
-		queryAddCondition(query, qc.ln, " Limit $3")
-	}
-}
-2019-03-24T14:23:03.905Z
-2019-03-24T14:23:03.953Z
-
-2019-03-24T14:25:07.693Z"
-2019-03-24T14:25:07.736Z
+var path string
+		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
+			return
+		} // ` and id > ` + strconv.Itoa(qc.mv) + `` //
+		query += compareID //` and path > '` + path + `'`
 */
 
-func (db *DataBase) postsGetUsual(tx *sql.Tx, thread models.Thread, slug string, limit int, lb bool,
-	t time.Time, tb bool, desc bool) (foundPosts []models.Post, err error) {
+func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread, slug string,
+	qc QueryGetConditions) (foundPosts []models.Post, err error) {
+	asc := " order by created, id "
+	desc := " order by created desc, id desc "
+	compareIDASC := `and id > ` + strconv.Itoa(qc.mv)
+	compareIDDESC := `and id < ` + strconv.Itoa(qc.mv)
+	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
+	return
+}
 
-	query := `select id, author, created, forum, message, thread, parent, path from
-							Post where thread = $1 and lower(forum) like lower($2)`
+func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread, slug string,
+	qc QueryGetConditions) (foundPosts []models.Post, err error) {
+	asc := " order by string_to_array(path, '.')::int[], created "
+	desc := " order by	string_to_array(path, '.')::int[] desc, created desc "
 
-	if tb {
-		if desc {
-			query += ` and created <= $3`
-			query += ` order by
-												  string_to_array(path, '.')::int[], created desc;
-							`
-		} else {
-			query += ` and created >= $3`
-			query += ` order by
-													string_to_array(path, '.')::int[], created`
+	var path string
+
+	if qc.mn {
+		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
+			return
 		}
-		if lb {
-			query += ` Limit $4`
-		}
-	} else if lb {
-		if desc {
-			query += ` order by 
-													string_to_array(path, '.')::int[], created desc`
-		} else {
-			query += ` order by 
-													string_to_array(path, '.')::int[], created`
-		}
-		query += ` Limit $3`
 	}
+
+	fmt.Println("after:" + path)
+	compareIDASC := ` and path > '` + path + `'`
+	compareIDDESC := ` and path < '` + path + `'`
+	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
+	return
+}
+
+func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread, slug string,
+	qc QueryGetConditions) (foundPosts []models.Post, err error) {
+	asc := ` order by string_to_array(path, '.')::int[], created `
+	desc := ` order by split_part(path, '.', 2) desc, string_to_array(path, '.')::int[], created `
+
+	var path string
+
+	if qc.mn {
+		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
+			return
+		}
+	}
+
+	fmt.Println("afterpostsGetParentTree:" + path)
+	compareIDASC := ` and path > '` + path + `'`
+	compareIDDESC := ` and path < '` + path + `' and split_part(path, '.', 2) < split_part('` + path + `', '.', 2)`
+
+	if qc.lv, err = parentTreeGetLimit(tx, thread, qc,
+		asc, desc, compareIDASC, compareIDDESC); err != nil {
+		fmt.Println("parentTreeGetLimit err")
+		return
+	}
+
+	foundPosts, err = db.postsGet(tx, thread, slug, qc, asc, desc, compareIDASC, compareIDDESC)
+	return
+}
+
+func parentTreeGetLimit(tx *sql.Tx, thread models.Thread,
+	qc QueryGetConditions, sortASC string, sortDESC string,
+	compareIDASC string, compareIDDESC string) (realLimit int, err error) {
+
+	queryInside := `select * from Post where 1 = 1 
+	`
+
+	limitNeed := qc.ln
+	qc.ln = false
+	queryInside = queryAddConditions(queryInside, qc, sortASC, sortDESC, compareIDASC, compareIDDESC)
+
+	qc.ln = limitNeed
+
+	query := `select COUNT(*), split_part(path, '.', 2) from ( ` + queryInside + ` ) as A
+					GROUP BY split_part(path, '.', 2), forum, thread
+					HAVING thread = $1 and lower(forum) like lower($2)
+					`
+
+	if qc.desc {
+		query += "order by split_part(path, '.', 2) desc"
+	} else {
+		query += "order by split_part(path, '.', 2)"
+	}
+
+	query += ` Limit $3`
 
 	var rows *sql.Rows
 
-	if tb {
-		if lb {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t, limit)
-		} else {
-			rows, err = tx.Query(query, thread.ID, thread.Forum, t)
+	fmt.Println("prepare query:", query)
+
+	if rows, err = tx.Query(query, thread.ID, thread.Forum, qc.lv); err != nil {
+		return
+	}
+	defer rows.Close()
+
+	fmt.Println("was:", qc.lv)
+
+	realLimit = 0
+	for rows.Next() {
+		var count int
+		var str string
+		if err = rows.Scan(&count, &str); err != nil {
+			break
 		}
-	} else if lb {
-		rows, err = tx.Query(query, thread.ID, thread.Forum, limit)
-	} else {
-		rows, err = tx.Query(query, thread.ID, thread.Forum)
+		fmt.Println("str:" + str)
+		realLimit += count
+	}
+	if err != nil {
+		return
 	}
 
-	if err != nil {
-		fmt.Println("sorry163")
+	fmt.Println("now:", realLimit)
+	return
+}
+
+func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread, slug string,
+	qc QueryGetConditions, sortASC string, sortDESC string, compareIDASC string, compareIDDESC string) (foundPosts []models.Post, err error) {
+
+	query := `select id, author, created, forum, message, thread, parent, path, level from
+							Post where thread = $1 and lower(forum) like lower($2)`
+
+	query = queryAddConditions(query, qc, sortASC, sortDESC, compareIDASC, compareIDDESC)
+
+	fmt.Println("query:" + query)
+	var rows *sql.Rows
+
+	if rows, err = tx.Query(query, thread.ID, thread.Forum); err != nil {
 		return
 	}
 	defer rows.Close()
@@ -359,11 +265,12 @@ func (db *DataBase) postsGetUsual(tx *sql.Tx, thread models.Thread, slug string,
 		post := models.Post{}
 		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
 			&post.Forum, &post.Message, &post.Thread, &post.Parent,
-			&post.Path); err != nil {
-			fmt.Println("wrong path")
+			&post.Path, &post.Level); err != nil {
 			break
 		}
 		foundPosts = append(foundPosts, post)
 	}
 	return
 }
+
+// 370. lets do 200 - 161 done
