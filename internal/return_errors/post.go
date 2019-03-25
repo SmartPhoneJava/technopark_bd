@@ -9,3 +9,7 @@ func ErrorInvalidPath() error {
 func ErrorInvalidID() error {
 	return errors.New("id invalid")
 }
+
+func ErrorPostConflict() error {
+	return errors.New("Parent post was created in another thread")
+}

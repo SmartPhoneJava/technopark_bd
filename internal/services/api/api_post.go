@@ -3,9 +3,11 @@ package api
 import (
 	data "escapade/internal/database"
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 	"net/http"
 )
 
+// CreatePosts create posts
 func (h *Handler) CreatePosts(rw http.ResponseWriter, r *http.Request) {
 	const place = "CreatePosts"
 	var (
@@ -30,25 +32,25 @@ func (h *Handler) CreatePosts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(posts) > 0 {
-		if posts, err = h.DB.CreatePost(posts, slug); err != nil {
-			//if err.Error() == re.ErrorForumUserNotExist().Error() {
+	if posts, err = h.DB.CreatePost(posts, slug); err != nil {
+		if err.Error() != re.ErrorPostConflict().Error() {
 			rw.WriteHeader(http.StatusNotFound)
 			sendErrorJSON(rw, err, place)
-			// } else {
-			// 	rw.WriteHeader(http.StatusConflict)
-			// 	sendSuccessJSON(rw, forum, place)
-			// }
-			printResult(err, http.StatusBadRequest, place)
-			return
+		} else {
+			rw.WriteHeader(http.StatusConflict)
+			sendErrorJSON(rw, err, place)
 		}
+		printResult(err, http.StatusBadRequest, place)
+		return
 	}
+
 	rw.WriteHeader(http.StatusCreated)
 	sendSuccessJSON(rw, posts, place)
 	printResult(err, http.StatusCreated, place)
 	return
 }
 
+// GetPosts get posts
 func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetPosts"
 	var (
@@ -110,6 +112,7 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// UpdatePost update post
 func (h *Handler) UpdatePost(rw http.ResponseWriter, r *http.Request) {
 	const place = "UpdatePost"
 	var (

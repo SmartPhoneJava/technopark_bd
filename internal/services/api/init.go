@@ -16,6 +16,7 @@ func Init(DB *database.DataBase, storage config.FileStorageConfig) (handler *Han
 	return
 }
 
+// GetHandler get handler
 func GetHandler(confPath string) (handler *Handler, conf *config.Configuration, err error) {
 
 	var (

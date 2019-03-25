@@ -28,4 +28,5 @@ func (post *Post) Print() {
 	fmt.Println("--Level:", post.Level)
 	fmt.Println("--Created:", post.Created)
 	fmt.Println("--IsEdited:", post.IsEdited)
+	fmt.Println("--Thread:", post.Thread)
 }

@@ -302,6 +302,26 @@ func parentTreeGet(tx *sql.Tx, thread models.Thread,
 	return
 }
 
+func (db *DataBase) postCheckParent(tx *sql.Tx, post models.Post, thread models.Thread) (err error) {
+
+	query := `
+	select 1
+		from Post as P
+		where id!=$1 and $2  =
+			(
+				select thread from Post where id=$1
+			)	
+	`
+	post.Print()
+
+	var tmp int
+	if err = tx.QueryRow(query, post.Parent, thread.ID).Scan(&tmp); err != nil {
+		return
+	}
+
+	return
+}
+
 func queryAddPostReturning(query *string) {
 	*query += ` RETURNING id, author, created, forum, message, thread, parent, path, level, isEdited `
 }

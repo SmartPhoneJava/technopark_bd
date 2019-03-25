@@ -125,11 +125,10 @@ func getIDmin(r *http.Request) (exist bool, since int, err error) {
 
 	if since, err = strconv.Atoi(str); err != nil {
 		return
-	} else {
-		if since < 0 {
-			err = re.ErrorInvalidDate()
-			return
-		}
+	}
+	if since < 0 {
+		err = re.ErrorInvalidDate()
+		return
 	}
 
 	return
@@ -150,17 +149,17 @@ func getTime(r *http.Request) (exist bool, t time.Time, err error) {
 		if t, err = time.Parse("2006-01-02T15:04:05.000Z", str); err != nil {
 			if num, err = strconv.Atoi(str); err != nil {
 				return
-			} else {
-				if num < 0 {
-					err = re.ErrorInvalidDate()
-					return
-				} else if num < 10000 {
-					t = time.Date(num, 0, 0, 0, 0, 0, 0, time.UTC)
-				} else {
-					err = re.ErrorInvalidDate()
-					return
-				}
 			}
+			if num < 0 {
+				err = re.ErrorInvalidDate()
+				return
+			} else if num < 10000 {
+				t = time.Date(num, 0, 0, 0, 0, 0, 0, time.UTC)
+			} else {
+				err = re.ErrorInvalidDate()
+				return
+			}
+
 		}
 
 	}

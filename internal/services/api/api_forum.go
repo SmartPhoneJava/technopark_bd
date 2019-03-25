@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// CreateForum create forum
 func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	const place = "CreateForum"
 	var (
@@ -40,7 +41,7 @@ func (h *Handler) CreateForum(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// GetForum
+// GetForum get forum
 func (h *Handler) GetForum(rw http.ResponseWriter, r *http.Request) {
 	const place = "GetForum"
 	var (

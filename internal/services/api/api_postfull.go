@@ -29,14 +29,14 @@ func (h *Handler) GetPostfull(rw http.ResponseWriter, r *http.Request) {
 	existRelated, related = getRelated(r)
 
 	if post, err = h.DB.GetPostfull(existRelated, related, id); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
+		//if err.Error() != re.ErrorPostConflict().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
-		printResult(err, http.StatusNotFound, place)
+		//} else {
+		//	rw.WriteHeader(http.StatusConflict)
+		//	sendErrorJSON(rw, err, place)
+		//}
+		printResult(err, http.StatusConflict, place)
 		return
 	}
 

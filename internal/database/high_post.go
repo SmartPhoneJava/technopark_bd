@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"escapade/internal/models"
+	re "escapade/internal/return_errors"
 	"fmt"
 	"time"
 
@@ -52,8 +53,10 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 	createdPosts = []models.Post{}
 
 	if thatThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
+		fmt.Println("thatThread err")
 		return
 	}
+	fmt.Println("thatThread id:", thatThread.ID)
 
 	t = time.Now()
 	count = 0
@@ -64,6 +67,13 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 
 		if post.Author, err = db.userCheckID(tx, post.Author); err != nil {
 			return
+		}
+
+		if post.Parent != 0 {
+			if err = db.postCheckParent(tx, post, thatThread); err != nil {
+				err = re.ErrorPostConflict()
+				return
+			}
 		}
 
 		if post, err = db.postCreate(tx, post, thatThread, t); err != nil {
