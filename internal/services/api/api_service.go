@@ -16,13 +16,8 @@ func (h *Handler) GetStatus(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
 	if status, err = h.DB.GetStatus(); err != nil {
-		//if err.Error() != re.ErrorPostConflict().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		//} else {
-		//	rw.WriteHeader(http.StatusConflict)
-		//	sendErrorJSON(rw, err, place)
-		//}
 		printResult(err, http.StatusConflict, place)
 		return
 	}

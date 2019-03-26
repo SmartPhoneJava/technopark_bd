@@ -8,26 +8,26 @@ import (
 	"strconv"
 	"time"
 
-	//"reflect"
-
 	"github.com/gorilla/mux"
 )
 
-func getNickname(r *http.Request) (nickname string, err error) {
+func getStringFromPath(r *http.Request, name string,
+	expected error) (str string, err error) {
 	var (
 		vars map[string]string
 	)
 
 	vars = mux.Vars(r)
 
-	if nickname = vars["name"]; nickname == "" {
-		err = re.ErrorInvalidName()
+	if str = vars[name]; str == "" {
+		err = expected
 		return
 	}
 	return
 }
 
-func getPostID(r *http.Request) (id int, err error) {
+func getIntFromPath(r *http.Request, name string,
+	expected error) (val int, err error) {
 	var (
 		vars map[string]string
 		str  string
@@ -35,34 +35,31 @@ func getPostID(r *http.Request) (id int, err error) {
 
 	vars = mux.Vars(r)
 
-	if str = vars["id"]; str == "" {
-		err = re.ErrorInvalidID()
+	if str = vars[name]; str == "" {
+		err = expected
 		return
 	}
-
-	if id, err = strconv.Atoi(str); err != nil {
+	if val, err = strconv.Atoi(str); err != nil {
+		err = expected
 		return
 	}
-	if id < 0 {
-		err = re.ErrorInvalidID()
+	if val < 0 {
+		err = expected
 		return
 	}
-
 	return
 }
 
+func getNickname(r *http.Request) (nickname string, err error) {
+	return getStringFromPath(r, "name", re.ErrorInvalidName())
+}
+
+func getPostID(r *http.Request) (id int, err error) {
+	return getIntFromPath(r, "id", re.ErrorInvalidID())
+}
+
 func getSlug(r *http.Request) (slug string, err error) {
-	var (
-		vars map[string]string
-	)
-
-	vars = mux.Vars(r)
-
-	if slug = vars["slug"]; slug == "" {
-		err = re.ErrorForumSlugInvalid()
-		return
-	}
-	return
+	return getStringFromPath(r, "slug", re.ErrorForumSlugInvalid())
 }
 
 func getUser(r *http.Request) (user models.User, err error) {
@@ -248,3 +245,5 @@ func getVote(r *http.Request) (vote models.Vote, err error) {
 
 	return
 }
+
+// 250

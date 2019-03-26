@@ -2,7 +2,6 @@ package api
 
 import (
 	"escapade/internal/models"
-	"fmt"
 	"net/http"
 )
 
@@ -29,19 +28,11 @@ func (h *Handler) GetPostfull(rw http.ResponseWriter, r *http.Request) {
 	existRelated, related = getRelated(r)
 
 	if post, err = h.DB.GetPostfull(existRelated, related, id); err != nil {
-		//if err.Error() != re.ErrorPostConflict().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		//} else {
-		//	rw.WriteHeader(http.StatusConflict)
-		//	sendErrorJSON(rw, err, place)
-		//}
 		printResult(err, http.StatusConflict, place)
 		return
 	}
-
-	fmt.Println("GetPost!")
-	post.Post.Print()
 
 	rw.WriteHeader(http.StatusOK)
 	sendSuccessJSON(rw, post, place)

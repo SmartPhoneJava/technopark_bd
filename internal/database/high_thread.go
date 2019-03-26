@@ -23,9 +23,9 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 		return
 	}
 
-	if thread.Author, err = db.userCheckID(tx, thread.Author); err != nil {
-		return
-	}
+	// if thread.Author, err = db.userCheckID(tx, thread.Author); err != nil {
+	// 	return
+	// }
 
 	if thread.Forum, err = db.forumCheckID(tx, thread.Forum); err != nil {
 		return

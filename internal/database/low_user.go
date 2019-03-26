@@ -25,11 +25,14 @@ func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser model
 // updateUser
 func (db *DataBase) updateUser(tx *sql.Tx, user models.User) (updated models.User, err error) {
 
-	query := `	UPDATE UserForum set fullname = $1, email = $2, about = $3
-								where nickname = $4
-						`
+	query := queryUpdateUser(user.Fullname, user.Email, user.About)
+	if query == "" {
+		updated, err = db.findUserByName(tx, user.Nickname)
+		return
+	}
+	query += `	where nickname = $1 	`
 	queryAddUserReturning(&query)
-	row := tx.QueryRow(query, user.Fullname, user.Email, user.About, user.Nickname)
+	row := tx.QueryRow(query, user.Nickname)
 
 	updated, err = userScan(row)
 	return

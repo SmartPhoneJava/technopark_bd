@@ -32,13 +32,8 @@ func (h *Handler) Vote(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if thread, err = h.DB.CreateVote(vote, slug); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
 		printResult(err, http.StatusBadRequest, place)
 		return
 	}

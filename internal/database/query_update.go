@@ -75,6 +75,8 @@ func queryUpdateUser(fullname string, email string,
 	query = `	UPDATE UserForum set `
 	count := 0
 	insertStr(&query, str1, &count)
+	insertStr(&query, str2, &count)
+	insertStr(&query, str3, &count)
 	return
 }
 

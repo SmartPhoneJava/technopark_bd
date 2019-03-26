@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"time"
 
 	//
@@ -47,17 +46,13 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 	createdPosts = []models.Post{}
 
 	if thatThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
-		fmt.Println("thatThread err")
+
 		return
 	}
-	fmt.Println("thatThread id:", thatThread.ID)
 
 	t = time.Now()
 	count = 0
 	for _, post := range posts {
-		// if returnForum, err = db.postConfirmUnique(tx, forum); err != nil {
-		// 	return
-		// }
 
 		if post.Author, err = db.userCheckID(tx, post.Author); err != nil {
 			return
@@ -98,38 +93,23 @@ func (db *DataBase) GetPosts(slug string, qgc QueryGetConditions, sort string) (
 	}
 	defer tx.Rollback()
 
-	// if _, err = db.findForumBySlug(tx, slug); err != nil {
-	// 	err = re.ErrorForumNotExist()
-	// 	return
-	// }
-
 	var thatThread models.Thread
 
 	if thatThread, err = db.threadFindByIDorSlug(tx, slug); err != nil {
 		return
 	}
 
-	if sort == "tree" {
-		if returnPosts, err = db.postsGetTree(tx, thatThread, qgc); err != nil {
-			return
-		}
-		for _, post := range returnPosts {
-			post.Print()
-		}
-	} else if sort == "parent_tree" {
-		if returnPosts, err = db.postsGetParentTree(tx, thatThread, qgc); err != nil {
-			return
-		}
-		for _, post := range returnPosts {
-			post.Print()
-		}
-	} else {
-		if returnPosts, err = db.postsGetFlat(tx, thatThread, qgc); err != nil {
-			return
-		}
-		for _, post := range returnPosts {
-			post.Print()
-		}
+	switch sort {
+	case "tree":
+		returnPosts, err = db.postsGetTree(tx, thatThread, qgc)
+	case "parent_tree":
+		returnPosts, err = db.postsGetParentTree(tx, thatThread, qgc)
+	default:
+		returnPosts, err = db.postsGetFlat(tx, thatThread, qgc)
+	}
+
+	if err != nil {
+		return
 	}
 
 	err = tx.Commit()

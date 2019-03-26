@@ -5,7 +5,6 @@ import (
 	database "escapade/internal/database"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
-	"fmt"
 	"net/http"
 )
 
@@ -97,18 +96,11 @@ func (h *Handler) GetUsers(rw http.ResponseWriter, r *http.Request) {
 	existSince, since = getNickNameMin(r)
 	desc = getDesc(r)
 
-	fmt.Println("since:", since)
-
 	qgc.InitUser(existSince, since, existLimit, limit, desc)
 
 	if users, err = h.DB.GetUsers(slug, qgc); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
 		printResult(err, http.StatusNotFound, place)
 		return
 	}

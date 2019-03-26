@@ -90,12 +90,6 @@ func (db *DataBase) UpdateUser(user models.User) (foundUser models.User, err err
 		}
 	}
 
-	var thisUser models.User
-	if thisUser, err = db.findUserByName(tx, user.Nickname); err != nil {
-		return
-	}
-	user.FillEmpty(thisUser)
-
 	if foundUser, err = db.updateUser(tx, user); err != nil {
 		return
 	}

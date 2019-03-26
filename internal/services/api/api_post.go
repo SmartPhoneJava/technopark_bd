@@ -95,13 +95,8 @@ func (h *Handler) GetPosts(rw http.ResponseWriter, r *http.Request) {
 	qgc.InitPost(existSince, since, existLimit, limit, desc)
 
 	if posts, err = h.DB.GetPosts(slug, qgc, sort); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
 		printResult(err, http.StatusNotFound, place)
 		return
 	}

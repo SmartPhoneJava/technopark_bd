@@ -158,14 +158,9 @@ func (h *Handler) GetThreads(rw http.ResponseWriter, r *http.Request) {
 	desc = getDesc(r)
 
 	if threads, err = h.DB.GetThreads(slug, limit, existLimit, t, existTime, desc); err != nil {
-		//if err.Error() == re.ErrorForumUserNotExist().Error() {
 		rw.WriteHeader(http.StatusNotFound)
 		sendErrorJSON(rw, err, place)
-		// } else {
-		// 	rw.WriteHeader(http.StatusConflict)
-		// 	sendSuccessJSON(rw, forum, place)
-		// }
-		printResult(err, http.StatusBadRequest, place)
+		printResult(err, http.StatusNotFound, place)
 		return
 	}
 

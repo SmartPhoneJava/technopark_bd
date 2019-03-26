@@ -54,13 +54,11 @@ func (qgc *QueryGetConditions) InitPost(
 	qgc.desc = desc
 }
 
-// Init init
-func (qgc *QueryGetConditions) Init(tv time.Time,
-	tn bool, lv int, mn bool, mv int, ln bool, desc bool) {
+// InitThread init thread
+func (qgc *QueryGetConditions) InitThread(tv time.Time,
+	tn bool, lv int, ln bool, desc bool) {
 	qgc.tv = tv
 	qgc.tn = tn
-	qgc.mv = mv
-	qgc.mn = mn
 	qgc.lv = lv
 	qgc.ln = ln
 	qgc.desc = desc

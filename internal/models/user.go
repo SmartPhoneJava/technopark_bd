@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"strings"
 )
 
 // User model
@@ -12,19 +11,6 @@ type User struct {
 	Email    string `json:"email" db:"email"`
 	Fullname string `json:"fullname" db:"fullname"`
 	Nickname string `json:"nickname" db:"nickname"`
-}
-
-// FillEmpty fill empty
-func (user *User) FillEmpty(another User) {
-	if strings.Trim(user.Email, " ") == "" {
-		user.Email = another.Email
-	}
-	if strings.Trim(user.Fullname, " ") == "" {
-		user.Fullname = another.Fullname
-	}
-	if strings.Trim(user.About, " ") == "" {
-		user.About = another.About
-	}
 }
 
 // Print for debug
