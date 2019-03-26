@@ -46,6 +46,4 @@ EXPOSE 5432
 
 USER root
 
-CMD service postgresql start
-
-docker ps 
+CMD service postgresql start && go run main.go
