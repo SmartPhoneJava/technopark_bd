@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"escapade/internal/models"
 	re "escapade/internal/return_errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -28,13 +29,15 @@ func (db *DataBase) threadCreate(tx *sql.Tx, thread *models.Thread) (createdThre
 // updatedThread
 func (db *DataBase) threadUpdate(tx *sql.Tx, thread *models.Thread, slug string) (updatedThread models.Thread, err error) {
 
-	query := `	UPDATE Thread set message = $1, title = $2`
-
+	query := queryUpdateThread(thread.Message, thread.Title)
+	if query == "" {
+		updatedThread, err = db.threadFindByIDorSlug(tx, slug)
+		return
+	}
 	queryAddSlug(&query, slug)
 	queryAddThreadReturning(&query)
-
-	row := tx.QueryRow(query, thread.Message, thread.Title)
-
+	fmt.Print("threadUpdate query:", query)
+	row := tx.QueryRow(query)
 	updatedThread, err = threadScan(row)
 	return
 }
@@ -192,7 +195,7 @@ func queryAddThreadReturning(query *string) {
 
 // queryAddThreadReturning add returning for insert,update etc
 func querySelectThread() string {
-	return ` SELECT id, slug, author, created, forum, message, title, votes from Thread `
+	return ` SELECT T.id, T.slug, T.author, T.created, T.forum, T.message, T.title, T.votes from Thread as T `
 }
 
 // scan row to model Vote

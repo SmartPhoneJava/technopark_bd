@@ -45,14 +45,31 @@ func Init(CDB config.DatabaseConfig) (db *DataBase, err error) {
 
 // CreateTables creates table
 func (db *DataBase) createTables() error {
-	sqlStatement := `
+	sqlStatement := dropTables() +
+		userCreateTable() + forumCreateTable() +
+		threadCreateTable() + postCreateTable() +
+		voteCreateTable() + statusCreateTable()
+	_, err := db.Db.Exec(sqlStatement)
 
+	if err != nil {
+		fmt.Println("database/init - fail:" + err.Error())
+	}
+	return err
+}
+
+func dropTables() string {
+	return `
     DROP TABLE IF EXISTS Vote;
     DROP TABLE IF EXISTS Post;
     DROP TABLE IF EXISTS Thread;
     DROP TABLE IF EXISTS Forum;
     DROP TABLE IF EXISTS UserForum;
+    DROP TABLE IF EXISTS Status;
+    `
+}
 
+func userCreateTable() string {
+	return `
     CREATE Table UserForum (
         id SERIAL PRIMARY KEY,
         nickname varchar(80) UNIQUE NOT NULL collate "C",
@@ -60,7 +77,11 @@ func (db *DataBase) createTables() error {
         email varchar(50) UNIQUE NOT NULL,
         about varchar(1000) 
     );
+    `
+}
 
+func forumCreateTable() string {
+	return `
     CREATE Table Forum (
         id SERIAL PRIMARY KEY,
         posts int default 0,
@@ -75,7 +96,11 @@ func (db *DataBase) createTables() error {
         FOREIGN KEY (user_nickname)
         REFERENCES UserForum(nickname)
             ON DELETE CASCADE;
+    `
+}
 
+func threadCreateTable() string {
+	return `
     CREATE Table Thread (
         id SERIAL PRIMARY KEY,
         author varchar(120) not null,
@@ -98,7 +123,11 @@ func (db *DataBase) createTables() error {
     FOREIGN KEY (forum)
     REFERENCES Forum(slug)
         ON DELETE CASCADE;
+    `
+}
 
+func postCreateTable() string {
+	return `
     CREATE Table Post (
         id SERIAL PRIMARY KEY,
         author varchar(120) not null,
@@ -108,8 +137,7 @@ func (db *DataBase) createTables() error {
         isEdited boolean default false,
         thread int,
         parent int,
-        path varchar(1000),
-        level int
+        path varchar(1000)
     );
 
     ALTER TABLE Post
@@ -129,7 +157,11 @@ func (db *DataBase) createTables() error {
     FOREIGN KEY (thread)
     REFERENCES Thread(id)
         ON DELETE CASCADE;
+    `
+}
 
+func voteCreateTable() string {
+	return `
     CREATE Table Vote (
         id SERIAL PRIMARY KEY,
         author varchar(120) not null,
@@ -149,12 +181,19 @@ func (db *DataBase) createTables() error {
     FOREIGN KEY (thread)
     REFERENCES Thread(id)
         ON DELETE CASCADE;
+    `
+}
 
-	`
-	_, err := db.Db.Exec(sqlStatement)
+func statusCreateTable() string {
+	return `
+    CREATE Table Status (
+        Forum  int default 0,
+        Post   int default 0,
+        Thread int default 0,
+        Users   int default 0
+    );
 
-	if err != nil {
-		fmt.Println("database/init - fail:" + err.Error())
-	}
-	return err
+    INSERT INTO Status(Post) VALUES (0) 
+						 
+    `
 }

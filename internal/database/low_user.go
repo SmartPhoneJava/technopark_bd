@@ -14,7 +14,7 @@ import (
 func (db *DataBase) createUser(tx *sql.Tx, user *models.User) (createdUser models.User, err error) {
 
 	query := `INSERT INTO UserForum(fullname, nickname, email, about) VALUES
-						 	($1, E'` + user.Nickname + `', $2, $3) 
+						 	($1, '` + user.Nickname + `', $2, $3) 
 						 `
 	queryAddUserReturning(&query)
 	row := tx.QueryRow(query, user.Fullname, user.Email, user.About)
@@ -145,13 +145,9 @@ func (db *DataBase) usersGet(tx *sql.Tx, slug string,
 
 	foundUsers = []models.User{}
 	for rows.Next() {
-
-		user := models.User{}
-		if err = rows.Scan(&user.Fullname, &user.Nickname,
-			&user.Email, &user.About); err != nil {
+		if err = usersScan(rows, &foundUsers); err != nil {
 			break
 		}
-		foundUsers = append(foundUsers, user)
 	}
 	return
 }
@@ -176,13 +172,9 @@ func (db DataBase) findUsers(tx *sql.Tx, queryAdd string, taken ...string) (foun
 
 	foundUsers = &[]models.User{}
 	for rows.Next() {
-		user := models.User{}
-		if err = rows.Scan(&user.Fullname, &user.Nickname,
-			&user.Email, &user.About); err != nil {
+		if err = usersScan(rows, foundUsers); err != nil {
 			break
 		}
-
-		*foundUsers = append(*foundUsers, user)
 	}
 	return
 }
@@ -210,11 +202,22 @@ func queryAddUserReturning(query *string) {
 	*query += ` RETURNING fullname, nickname, email, about `
 }
 
-// scan row to model Vote
+// scan row to model User
 func userScan(row *sql.Row) (foundUser models.User, err error) {
 	foundUser = models.User{}
 	err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
 		&foundUser.Email, &foundUser.About)
+	return
+}
+
+// scan rows to model User
+func usersScan(rows *sql.Rows, foundUsers *[]models.User) (err error) {
+	foundUser := models.User{}
+	err = rows.Scan(&foundUser.Fullname, &foundUser.Nickname,
+		&foundUser.Email, &foundUser.About)
+	if err == nil {
+		*foundUsers = append(*foundUsers, foundUser)
+	}
 	return
 }
 

@@ -19,16 +19,18 @@ type postQuery struct {
 	compareDESC string
 }
 
-func getPathAndLvl(tx *sql.Tx, id int) (path string, lvl int, err error) {
-	query := `select path, level from Post where id = $1
+// getPath
+func getPath(tx *sql.Tx, id int) (path string, err error) {
+	query := `select path from Post where id = $1
 						 `
 
-	if err = tx.QueryRow(query, id).Scan(&path, &lvl); err != nil {
+	if err = tx.QueryRow(query, id).Scan(&path); err != nil {
 		return
 	}
 	return
 }
 
+// updatePath
 func updatePath(path *string, id int) {
 	*path = *path + "." + strconv.Itoa(id)
 }
@@ -39,32 +41,26 @@ func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Threa
 
 	var (
 		path string
-		lvl  int
 	)
 	if post.Parent == 0 {
 		path = "0"
-		lvl = 0
 	} else {
-		if path, lvl, err = getPathAndLvl(tx, post.Parent); err != nil {
+		if path, err = getPath(tx, post.Parent); err != nil {
 			return
 		}
 		if path == "" {
 			err = re.ErrorInvalidPath()
 		}
 	}
-	lvl++
 
-	query := `INSERT INTO Post(author, created, forum, message, thread, parent, path, level) VALUES
-						 	($1, $2, $3, $4, $5, $6, $7, $8) 
+	query := `INSERT INTO Post(author, created, forum, message, thread, parent, path) VALUES
+						 	($1, $2, $3, $4, $5, $6, $7) 
 						 `
 	queryAddPostReturning(&query)
 	row := tx.QueryRow(query, post.Author, t,
-		thread.Forum, post.Message, thread.ID, post.Parent, path, lvl)
+		thread.Forum, post.Message, thread.ID, post.Parent, path)
 
-	createdPost = models.Post{}
-	if err = row.Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
-		&createdPost.Forum, &createdPost.Message, &createdPost.Thread, &createdPost.Parent,
-		&createdPost.Path, &createdPost.Level, &post.IsEdited); err != nil {
+	if createdPost, err = postScan(row); err != nil {
 		return
 	}
 
@@ -75,56 +71,43 @@ func (db *DataBase) postCreate(tx *sql.Tx, post models.Post, thread models.Threa
 	return
 }
 
-// postCreate create post
-func (db *DataBase) postUpdate(tx *sql.Tx, post models.Post, id int) (createdPost models.Post, err error) {
+// postFind
+func (db *DataBase) postFind(tx *sql.Tx, id int) (foundPost models.Post, err error) {
+	query := querySelectPost() + ` where id=$1 `
+	foundPost, err = postScan(tx.QueryRow(query, id))
+	return
+}
 
-	query := `UPDATE Post set message=$1, isEdited=true where id=$2 `
+// postCreate create post
+func (db *DataBase) postUpdate(tx *sql.Tx, post models.Post, id int) (updatedPost models.Post, err error) {
+
+	if updatedPost, err = db.postFind(tx, id); err != nil {
+		return
+	}
+
+	if updatedPost.Message == post.Message {
+		return
+	}
+	query := queryUpdatePost(post.Message)
+	if query == "" {
+		return
+	}
+	query += ` where id=$1 `
 	queryAddPostReturning(&query)
-	createdPost = models.Post{}
-	err = tx.QueryRow(query, post.Message, id).Scan(&createdPost.ID, &createdPost.Author, &createdPost.Created,
-		&createdPost.Forum, &createdPost.Message, &createdPost.Thread, &createdPost.Parent,
-		&createdPost.Path, &createdPost.Level, &createdPost.IsEdited)
-	fmt.Print("look at postUpdate")
-	createdPost.Print()
+	updatedPost, err = postScan(tx.QueryRow(query, id))
 
 	return
 }
 
-/*
-// for threads
-
-func queryAddConditions(queryInit string, qc QueryGetConditions, sortASC string, sortDESC string) (query string) {
-	query = queryInit
-	if qc.tn {
-		if qc.desc {
-			query += ` and created <= $3`
-			query += sortDESC
-		} else {
-			query += ` and created >= $3`
-			query += sortASC
-		}
-		if qc.ln {
-			query += ` Limit $4`
-		}
-	} else if qc.ln {
-		if qc.desc {
-			query += sortDESC
-		} else {
-			query += sortASC
-		}
-		query += ` Limit $3`
-	}
-	return //23 -> 19
-}
-*/
-
+// queryAddConditions
 func queryAddConditions(query *string, qc QueryGetConditions, pq *postQuery) {
 	queryAddMinID(query, qc, pq.compareASC, pq.compareDESC)
 	queryAddNickname(query, qc, pq.compareASC, pq.compareDESC)
 	queryAddSort(query, qc, pq.sortASC, pq.sortDESC)
 	queryAddLimit(query, qc)
-} // 22
+}
 
+// queryAddSort
 func queryAddSort(query *string, qc QueryGetConditions, sortASC string, sortDESC string) {
 	if qc.desc {
 		*query += sortDESC
@@ -133,6 +116,7 @@ func queryAddSort(query *string, qc QueryGetConditions, sortASC string, sortDESC
 	}
 }
 
+// queryAddNickname
 func queryAddNickname(query *string, qc QueryGetConditions, compareIDASC string, compareIDDESC string) {
 	if qc.nn {
 		if qc.desc {
@@ -143,6 +127,7 @@ func queryAddNickname(query *string, qc QueryGetConditions, compareIDASC string,
 	}
 }
 
+// queryAddMinID
 func queryAddMinID(query *string, qc QueryGetConditions, compareIDASC string, compareIDDESC string) {
 	if qc.mn {
 		if qc.desc {
@@ -153,6 +138,7 @@ func queryAddMinID(query *string, qc QueryGetConditions, compareIDASC string, co
 	}
 }
 
+// queryAddLimit
 func queryAddLimit(query *string, qc QueryGetConditions) {
 	if qc.ln {
 		*query += ` Limit ` + strconv.Itoa(qc.lv)
@@ -160,6 +146,7 @@ func queryAddLimit(query *string, qc QueryGetConditions) {
 	return
 }
 
+// postsGetFlat
 func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions) (foundPosts []models.Post, err error) {
 
@@ -173,13 +160,14 @@ func (db *DataBase) postsGetFlat(tx *sql.Tx, thread models.Thread,
 	return
 }
 
+// postsGetTree
 func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions) (foundPosts []models.Post, err error) {
 
 	var path string
 
 	if qc.mn {
-		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
+		if path, err = getPath(tx, qc.mv); err != nil {
 			return
 		}
 	}
@@ -193,13 +181,14 @@ func (db *DataBase) postsGetTree(tx *sql.Tx, thread models.Thread,
 	return
 }
 
+// postsGetParentTree
 func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions) (foundPosts []models.Post, err error) {
 
 	var path string
 
 	if qc.mn {
-		if path, _, err = getPathAndLvl(tx, qc.mv); err != nil {
+		if path, err = getPath(tx, qc.mv); err != nil {
 			return
 		}
 	}
@@ -215,13 +204,11 @@ func (db *DataBase) postsGetParentTree(tx *sql.Tx, thread models.Thread,
 	return
 }
 
+// postsGet
 func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions, pq *postQuery) (foundPosts []models.Post, err error) {
 
-	query := `
-	select id, author, created, forum, message,
-		thread, parent, path, level 
-		 from Post 
+	query := querySelectPost() + `  
 		 where thread = $1 and 
 			 lower(forum) like lower($2)
 	`
@@ -237,19 +224,15 @@ func (db *DataBase) postsGet(tx *sql.Tx, thread models.Thread,
 
 	foundPosts = []models.Post{}
 	for rows.Next() {
-
-		post := models.Post{}
-		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
-			&post.Forum, &post.Message, &post.Thread, &post.Parent,
-			&post.Path, &post.Level); err != nil {
+		if err = postsScan(rows, &foundPosts); err != nil {
 			break
 		}
-		foundPosts = append(foundPosts, post)
 	}
 
 	return
 }
 
+// parentTreeGet
 func parentTreeGet(tx *sql.Tx, thread models.Thread,
 	qc QueryGetConditions, pq *postQuery) (foundPosts []models.Post, err error) {
 
@@ -270,11 +253,8 @@ func parentTreeGet(tx *sql.Tx, thread models.Thread,
 	queryAddSort(&groupBy, qc, "order by A.p", "order by A.p desc")
 	queryAddLimit(&groupBy, qc)
 
-	query := `
-	select id, author, created, forum,
-		message, thread, parent, path, level 
-			from Post 
-			where thread = $1 and lower(forum) like lower($2)
+	query := querySelectPost() + ` 
+		where thread = $1 and lower(forum) like lower($2)
 				 	and split_part(path, '.', 2) = ANY 
 				 	(` + groupBy + `)
 	`
@@ -289,19 +269,15 @@ func parentTreeGet(tx *sql.Tx, thread models.Thread,
 
 	foundPosts = []models.Post{}
 	for rows.Next() {
-
-		post := models.Post{}
-		if err = rows.Scan(&post.ID, &post.Author, &post.Created,
-			&post.Forum, &post.Message, &post.Thread, &post.Parent,
-			&post.Path, &post.Level); err != nil {
+		if err = postsScan(rows, &foundPosts); err != nil {
 			break
 		}
-		foundPosts = append(foundPosts, post)
 	}
 
 	return
 }
 
+// postCheckParent
 func (db *DataBase) postCheckParent(tx *sql.Tx, post models.Post, thread models.Thread) (err error) {
 
 	query := `
@@ -312,37 +288,43 @@ func (db *DataBase) postCheckParent(tx *sql.Tx, post models.Post, thread models.
 				select thread from Post where id=$1
 			)	
 	`
-	post.Print()
 
 	var tmp int
-	if err = tx.QueryRow(query, post.Parent, thread.ID).Scan(&tmp); err != nil {
-		return
-	}
-
+	err = tx.QueryRow(query, post.Parent, thread.ID).Scan(&tmp)
 	return
 }
 
-func queryAddPostReturning(query *string) {
-	*query += ` RETURNING id, author, created, forum, message, thread, parent, path, level, isEdited `
+// querySelectPost
+func querySelectPost() string {
+	return ` SELECT id, author, created, forum,
+	 message, thread, parent, path, isEdited FROM Post `
 }
 
-// scan row to model Vote
-// func postScan(row *sql.Row) (foundUser models.User, err error) {
-// 	foundUser = models.User{}
-// 	err = row.Scan(&foundUser.Fullname, &foundUser.Nickname,
-// 		&foundUser.Email, &foundUser.About)
-// 	return
-// }
+// queryAddPostReturning
+func queryAddPostReturning(query *string) {
+	*query += ` RETURNING id, author, created,
+	 forum, message, thread, parent, path, isEdited `
+}
 
+// postScan scan row to model Vote
+func postScan(row *sql.Row) (foundPost models.Post, err error) {
+	foundPost = models.Post{}
+	err = row.Scan(&foundPost.ID, &foundPost.Author, &foundPost.Created,
+		&foundPost.Forum, &foundPost.Message, &foundPost.Thread, &foundPost.Parent,
+		&foundPost.Path, &foundPost.IsEdited)
+	return
+}
+
+// postScan scan row to model Vote
 func postsScan(rows *sql.Rows, foundPosts *[]models.Post) (err error) {
 	foundPost := models.Post{}
 	err = rows.Scan(&foundPost.ID, &foundPost.Author, &foundPost.Created,
 		&foundPost.Forum, &foundPost.Message, &foundPost.Thread, &foundPost.Parent,
-		&foundPost.Path, &foundPost.Level)
+		&foundPost.Path, &foundPost.IsEdited)
 	if err == nil {
 		*foundPosts = append(*foundPosts, foundPost)
 	}
 	return
 }
 
-// 280 -> 307
+// 280 -> 307 -> 344

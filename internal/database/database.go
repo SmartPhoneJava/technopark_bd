@@ -14,12 +14,14 @@ type DataBase struct {
 	Db *sql.DB
 }
 
+// QueryParameters qiery
 type QueryParameters struct {
 	query  string
 	thread int
 	forum  int
 }
 
+// QueryGetConditions query
 type QueryGetConditions struct {
 	tv   time.Time // time value
 	tn   bool      // time need
@@ -32,6 +34,7 @@ type QueryGetConditions struct {
 	desc bool      // desc need
 }
 
+// InitUser init user
 func (qgc *QueryGetConditions) InitUser(
 	nn bool, nv string, ln bool, lv int, desc bool) {
 	qgc.nv = nv
@@ -41,6 +44,7 @@ func (qgc *QueryGetConditions) InitUser(
 	qgc.desc = desc
 }
 
+// InitPost init post
 func (qgc *QueryGetConditions) InitPost(
 	mn bool, mv int, ln bool, lv int, desc bool) {
 	qgc.mv = mv
@@ -50,6 +54,7 @@ func (qgc *QueryGetConditions) InitPost(
 	qgc.desc = desc
 }
 
+// Init init
 func (qgc *QueryGetConditions) Init(tv time.Time,
 	tn bool, lv int, mn bool, mv int, ln bool, desc bool) {
 	qgc.tv = tv

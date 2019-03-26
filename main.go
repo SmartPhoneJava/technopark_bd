@@ -21,34 +21,37 @@ func main() {
 
 	r := mux.NewRouter()
 
-	//var v = r.PathPrefix("/api").Subrouter()
+	var api = r.PathPrefix("/api").Subrouter()
+	var user = api.PathPrefix("/user").Subrouter()
 
-	//v.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	user.HandleFunc("/{name}/create", API.CreateUser).Methods("POST")
+	user.HandleFunc("/{name}/profile", API.GetProfile).Methods("GET")
+	user.HandleFunc("/{name}/profile", API.UpdateProfile).Methods("POST")
 
-	//var v1 = r.PathPrefix("/v1").Subrouter()
+	var forum = api.PathPrefix("/forum").Subrouter()
+	forum.HandleFunc("/create", API.CreateForum).Methods("POST")
+	forum.HandleFunc("/{slug}/details", API.GetForum).Methods("GET")
 
-	r.HandleFunc("/api/user/{name}/create", API.CreateUser).Methods("POST")
-	r.HandleFunc("/api/user/{name}/profile", API.GetProfile).Methods("GET")
-	r.HandleFunc("/api/user/{name}/profile", API.UpdateProfile).Methods("POST")
+	forum.HandleFunc("/{slug}/create", API.CreateThread).Methods("POST")
+	forum.HandleFunc("/{slug}/threads", API.GetThreads).Methods("GET")
 
-	r.HandleFunc("/api/forum/create", API.CreateForum).Methods("POST")
-	r.HandleFunc("/api/forum/{slug}/details", API.GetForum).Methods("GET")
+	forum.HandleFunc("/{slug}/users", API.GetUsers).Methods("GET")
 
-	r.HandleFunc("/api/forum/{slug}/create", API.CreateThread).Methods("POST")
-	r.HandleFunc("/api/forum/{slug}/threads", API.GetThreads).Methods("GET")
+	var thread = api.PathPrefix("/thread").Subrouter()
+	thread.HandleFunc("/{slug}/details", API.GetThreadDetails).Methods("GET")
+	thread.HandleFunc("/{slug}/details", API.UpdateThread).Methods("POST")
+	thread.HandleFunc("/{slug}/create", API.CreatePosts).Methods("POST")
+	thread.HandleFunc("/{slug}/posts", API.GetPosts).Methods("GET")
 
-	r.HandleFunc("/api/forum/{slug}/users", API.GetUsers).Methods("GET")
+	thread.HandleFunc("/{slug}/vote", API.Vote).Methods("POST")
 
-	r.HandleFunc("/api/thread/{slug}/details", API.GetThreadDetails).Methods("GET")
-	r.HandleFunc("/api/thread/{slug}/details", API.UpdateThread).Methods("POST")
+	var post = api.PathPrefix("/post").Subrouter()
+	post.HandleFunc("/{id}/details", API.GetPostfull).Methods("GET")
+	post.HandleFunc("/{id}/details", API.UpdatePost).Methods("POST")
 
-	r.HandleFunc("/api/thread/{slug}/create", API.CreatePosts).Methods("POST")
-	r.HandleFunc("/api/thread/{slug}/posts", API.GetPosts).Methods("GET")
-
-	r.HandleFunc("/api/thread/{slug}/vote", API.Vote).Methods("POST")
-
-	r.HandleFunc("/api/post/{id}/details", API.GetPostfull).Methods("GET")
-	r.HandleFunc("/api/post/{id}/details", API.UpdatePost).Methods("POST")
+	var service = api.PathPrefix("/service").Subrouter()
+	service.HandleFunc("/status", API.GetStatus).Methods("GET")
+	service.HandleFunc("/clear", API.Clear).Methods("POST")
 
 	if os.Getenv("PORT") == "" {
 		os.Setenv("PORT", conf.Server.Port)

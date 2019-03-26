@@ -29,6 +29,11 @@ func (db *DataBase) CreateForum(forum *models.Forum) (returnForum models.Forum, 
 	if returnForum, err = db.createForum(tx, forum); err != nil {
 		return
 	}
+
+	if err = db.statusAddForum(tx, 1); err != nil {
+		return
+	}
+
 	err = tx.Commit()
 	return
 }

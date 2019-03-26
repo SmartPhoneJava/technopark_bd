@@ -22,15 +22,9 @@ func (db *DataBase) UpdatePost(post models.Post, id int) (updatedPost models.Pos
 	}
 	defer tx.Rollback()
 
-	if post.Message == "" {
-		fmt.Println("why do you do it")
-		return
-	}
 	if updatedPost, err = db.postUpdate(tx, post, id); err != nil {
-		fmt.Println("updatedPost err")
 		return
 	}
-	fmt.Println("updatedPost success")
 	updatedPost.Print()
 	err = tx.Commit()
 	return
@@ -84,6 +78,10 @@ func (db *DataBase) CreatePost(posts []models.Post, slug string) (createdPosts [
 		count++
 	}
 	if err = db.forumUpdatePosts(tx, thatThread.Forum, count); err != nil {
+		return
+	}
+
+	if err = db.statusAddPost(tx, count); err != nil {
 		return
 	}
 

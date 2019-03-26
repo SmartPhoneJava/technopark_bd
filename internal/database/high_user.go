@@ -25,6 +25,10 @@ func (db *DataBase) CreateUser(user *models.User) (foundUsers *[]models.User, cr
 	if createdUser, err = db.createUser(tx, user); err != nil {
 		return
 	}
+
+	if err = db.statusAddUser(tx, 1); err != nil {
+		return
+	}
 	err = tx.Commit()
 	return
 }

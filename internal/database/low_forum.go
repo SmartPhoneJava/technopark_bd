@@ -48,8 +48,7 @@ func (db DataBase) forumConfirmUnique(tx *sql.Tx, forum *models.Forum) (foundFor
 
 func findForum(tx *sql.Tx, queryAdd string, arg string) (foundForum models.Forum, err error) {
 
-	query := `SELECT slug, title, user_nickname, posts, threads
-		FROM Forum ` + queryAdd
+	query := querySelectForum() + queryAdd
 
 	row := tx.QueryRow(query, arg)
 	foundForum, err = forumScan(row)
@@ -81,6 +80,11 @@ func (db DataBase) forumUpdatePosts(tx *sql.Tx, slug string, amount int) (err er
 // query add returning
 func queryAddForumReturning(query *string) {
 	*query += ` returning slug, title, user_nickname, posts, threads `
+}
+
+// queryAddThreadReturning add returning for insert,update etc
+func querySelectForum() string {
+	return ` SELECT F.slug, F.title, F.user_nickname, F.posts, F.threads FROM Forum as F `
 }
 
 // scan to model Forum

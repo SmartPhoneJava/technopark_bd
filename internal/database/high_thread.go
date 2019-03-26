@@ -39,6 +39,10 @@ func (db *DataBase) CreateThread(thread *models.Thread) (returnThread models.Thr
 		return
 	}
 
+	if err = db.statusAddThread(tx, 1); err != nil {
+		return
+	}
+
 	err = tx.Commit()
 	return
 }
